@@ -1,212 +1,55 @@
-// 코딩 마스터: 프로그래머 키우기 - 게임 데이터
+// 코딩 마스터: 프로그래머 키우기 - 게임 데이터 (밸런스 정밀 조정 버전)
 
-// 숫자 포맷팅 유틸리티
+// 칭호 임계치 대폭 상향 (최종 단계 도달을 매우 어렵게 설정)
+// 칭호 및 캐릭터 진화 시스템 (21단계 세분화)
+export const titles = [
+    // [Tier 0: Beginner Base - 입문자 계층]
+    { minPower: 0, title: '코딩 입문자', icon: '🐣', image: '/characters/beginner.png', tier: 0, hue: 0, scale: 1.0 },
+    { minPower: 100, title: 'Hello World 정복자', icon: '📜', image: '/characters/beginner.png', tier: 1, hue: 45, scale: 1.02, accessory: '✨' },
+    { minPower: 1000, title: '구글링 숙련자', icon: '🔍', image: '/characters/beginner.png', tier: 2, hue: 100, scale: 1.04, accessory: '📚' },
+    { minPower: 5000, title: '견습 개발자', icon: '🐥', image: '/characters/beginner.png', tier: 3, hue: 160, scale: 1.06, accessory: '🛠️' },
+    { minPower: 20000, title: '버그와 사투하는 자', icon: '🏹', image: '/characters/beginner.png', tier: 4, hue: 210, scale: 1.08, accessory: '🦟' },
+
+    // [Tier 1: Junior Base - 성장기 주니어 계층]
+    { minPower: 100000, title: '주니어 개발자', icon: '👨‍💻', image: '/characters/junior.png', tier: 5, hue: 0, scale: 1.1, aura: 'small' },
+    { minPower: 500000, title: '스택오버플로우 우수회원', icon: '🙋', image: '/characters/junior.png', tier: 6, hue: 40, scale: 1.12, aura: 'small', accessory: '⭐' },
+    { minPower: 2000000, title: '클린코드 전도사', icon: '🧹', image: '/characters/junior.png', tier: 7, hue: 110, scale: 1.14, aura: 'small', accessory: '💎' },
+    { minPower: 10000000, title: '리팩토링 장인', icon: '🛠️', image: '/characters/junior.png', tier: 8, hue: 180, scale: 1.16, aura: 'medium', accessory: '⚡' },
+    { minPower: 50000000, title: '중급 개발자', icon: '💪', image: '/characters/junior.png', tier: 9, hue: 260, scale: 1.18, aura: 'medium', accessory: '🔥' },
+
+    // [Tier 2: Elite - 고수 계층]
+    { minPower: 2e8, title: '아키텍처 설계자', icon: '🏗️', image: '/characters/junior.png', tier: 10, hue: 320, scale: 1.2, aura: 'medium', accessory: '📐' },
+    { minPower: 1e9, title: '시니어 개발자', icon: '🔥', image: '/characters/junior.png', tier: 11, hue: 0, scale: 1.22, aura: 'large', accessory: '👔' },
+    { minPower: 5e9, title: '기술 면접관', icon: '📝', image: '/characters/junior.png', tier: 12, hue: 60, scale: 1.24, aura: 'large', accessory: '🎤' },
+    { minPower: 2e10, title: '테크 리드', icon: '⚡', image: '/characters/junior.png', tier: 13, hue: 130, scale: 1.26, aura: 'epic', accessory: '👑' },
+    { minPower: 1e11, title: 'CTO', icon: '👑', image: '/characters/junior.png', tier: 14, hue: 200, scale: 1.28, aura: 'epic', accessory: '🌍' },
+
+    // [Tier 3: God Base - 신화 수준 계층]
+    { minPower: 1e12, title: '전설의 개발자', icon: '🌟', image: '/characters/god.png', tier: 15, hue: 0, scale: 1.35, aura: 'large', accessory: '🌌' },
+    { minPower: 1e13, title: '오픈소스의 수호자', icon: '🛡️', image: '/characters/god.png', tier: 16, hue: 40, scale: 1.38, aura: 'infinite', accessory: '🦾' },
+    { minPower: 1e14, title: '시스템 설계의 신', icon: '🧠', image: '/characters/god.png', tier: 17, hue: 100, scale: 1.41, aura: 'infinite', accessory: '☄️' },
+    { minPower: 1e15, title: '코딩의 신', icon: '🏆', image: '/characters/god.png', tier: 18, hue: 180, scale: 1.44, aura: 'infinite', accessory: '🛸' },
+    { minPower: 1e18, title: '우주 웹 아키텍트', icon: '🌌', image: '/characters/god.png', tier: 19, hue: 280, scale: 1.47, aura: 'infinite', accessory: '🪐' },
+    { minPower: 1e21, title: '디지털 창조주', icon: '✨', image: '/characters/god.png', tier: 20, hue: 340, scale: 1.5, aura: 'infinite', accessory: '☀️' },
+];
+
 export function formatNumber(num) {
+    if (num >= 1e21) return (num / 1e21).toFixed(1) + 'Sx';
+    if (num >= 1e18) return (num / 1e18).toFixed(1) + 'Qi';
+    if (num >= 1e15) return (num / 1e15).toFixed(1) + 'Q';
     if (num >= 1e12) return (num / 1e12).toFixed(1) + 'T';
     if (num >= 1e9) return (num / 1e9).toFixed(1) + 'B';
     if (num >= 1e6) return (num / 1e6).toFixed(1) + 'M';
     if (num >= 1e3) return (num / 1e3).toFixed(1) + 'K';
     if (num >= 1) return Math.floor(num).toString();
-    if (num > 0) return num.toFixed(1); // 소수점 1자리 표시
-    return '0';
+    return "0";
 }
 
-// 아이템 가격 계산
 export function getItemCost(item) {
-    return Math.floor(item.baseCost * Math.pow(item.costMultiplier, item.owned));
+    // 가격 배율을 보유 개수에 따라 소폭 증가시켜 후반 급가속 방지
+    const dynamicMultiplier = item.costMultiplier + (item.owned * 0.01);
+    return Math.floor(item.baseCost * Math.pow(dynamicMultiplier, item.owned));
 }
-
-// 자동 성장 아이템 (초당 코딩력 증가)
-export const autoItems = [
-    {
-        id: 'mechanical_keyboard',
-        name: '기계식 키보드',
-        icon: '⌨️',
-        description: '기계식 키보드로 타이핑 속도 UP!',
-        baseCost: 15,
-        costMultiplier: 1.15,
-        effect: 1,
-        owned: 0,
-    },
-    {
-        id: 'dual_monitor',
-        name: '듀얼 모니터',
-        icon: '🖥️',
-        description: '화면이 넓으면 생산성도 올라간다!',
-        baseCost: 100,
-        costMultiplier: 1.15,
-        effect: 1,
-        owned: 0,
-    },
-    {
-        id: 'high_spec_pc',
-        name: '고사양 컴퓨터',
-        icon: '💻',
-        description: '컴파일 시간이 획기적으로 줄어든다!',
-        baseCost: 1100,
-        costMultiplier: 1.15,
-        effect: 8,
-        owned: 0,
-    },
-    {
-        id: 'ergo_chair',
-        name: '인체공학 의자',
-        icon: '🪑',
-        description: '편안한 자세 = 오래 코딩 가능!',
-        baseCost: 12000,
-        costMultiplier: 1.15,
-        effect: 47,
-        owned: 0,
-    },
-    {
-        id: 'tech_blog',
-        name: '기술 블로그 구독',
-        icon: '📰',
-        description: '최신 기술 트렌드를 빠르게 캐치!',
-        baseCost: 130000,
-        costMultiplier: 1.15,
-        effect: 260,
-        owned: 0,
-    },
-    {
-        id: 'open_source',
-        name: '오픈소스 참여',
-        icon: '🌍',
-        description: '세계적인 개발자들과 함께 성장!',
-        baseCost: 1400000,
-        costMultiplier: 1.15,
-        effect: 1400,
-        owned: 0,
-    },
-];
-
-// 클릭 성장 아이템 (클릭당 코딩력 증가)
-export const clickItems = [
-    {
-        id: 'learn_python',
-        name: 'Python 배우기',
-        icon: '🐍',
-        description: 'Python으로 생산성 극대화!',
-        baseCost: 15,
-        costMultiplier: 1.15,
-        effect: 1,
-        owned: 0,
-    },
-    {
-        id: 'learn_java',
-        name: 'Java 배우기',
-        icon: '☕',
-        description: '정적 타입의 안정감을 느껴보세요!',
-        baseCost: 100,
-        costMultiplier: 1.15,
-        effect: 5,
-        owned: 0,
-    },
-    {
-        id: 'algorithm_study',
-        name: '알고리즘 스터디',
-        icon: '🧠',
-        description: '문제 해결 능력이 향상된다!',
-        baseCost: 1100,
-        costMultiplier: 1.15,
-        effect: 25,
-        owned: 0,
-    },
-    {
-        id: 'design_pattern',
-        name: '디자인 패턴',
-        icon: '🏗️',
-        description: '깔끔한 코드 아키텍처의 시작!',
-        baseCost: 12000,
-        costMultiplier: 1.15,
-        effect: 100,
-        owned: 0,
-    },
-    {
-        id: 'energy_drink',
-        name: '에너지 드링크',
-        icon: '🥤',
-        description: '카페인 부스트로 집중력 UP!',
-        baseCost: 130000,
-        costMultiplier: 1.15,
-        effect: 500,
-        owned: 0,
-    },
-    {
-        id: 'focus_music',
-        name: '집중력 향상 음악',
-        icon: '🎧',
-        description: 'Lo-fi 비트로 몰입감 극대화!',
-        baseCost: 1400000,
-        costMultiplier: 1.15,
-        effect: 2500,
-        owned: 0,
-    },
-];
-
-// 스페셜 아이템 (부스터 및 영구 아이템)
-export const specialItems = [
-    {
-        id: 'overtime_coffee',
-        name: '야근 커피',
-        icon: '☕',
-        description: '30분간 코딩력 획득 2배!',
-        baseCost: 500,
-        costMultiplier: 1.0,
-        effect: 2,
-        duration: 1800, // 30분 (초)
-        type: 'boost',
-        owned: 0,
-    },
-    {
-        id: 'cto_advice',
-        name: 'CTO의 조언',
-        icon: '👨‍💼',
-        description: '10분간 코딩력 획득 5배!',
-        baseCost: 5000,
-        costMultiplier: 1.0,
-        effect: 5,
-        duration: 600, // 10분 (초)
-        type: 'boost',
-        owned: 0,
-    },
-    {
-        id: 'legendary_keyboard',
-        name: '전설의 키보드',
-        icon: '🌟',
-        description: '영구적으로 클릭 코딩력 10배!',
-        baseCost: 1000000,
-        costMultiplier: 10,
-        effect: 10,
-        type: 'permanent',
-        owned: 0,
-    },
-    {
-        id: 'ad_remove',
-        name: '광고 제거',
-        icon: '🚫',
-        description: '모든 배너 광고를 제거합니다!',
-        baseCost: 50000,
-        costMultiplier: 1.0,
-        effect: 0,
-        type: 'one_time',
-        maxOwned: 1,
-        owned: 0,
-    },
-];
-
-// 레벨/칭호 시스템
-export const titles = [
-    { minPower: 0, title: '코딩 입문자', icon: '🐣' },
-    { minPower: 100, title: '견습 개발자', icon: '🐥' },
-    { minPower: 1000, title: '주니어 개발자', icon: '👨‍💻' },
-    { minPower: 10000, title: '중급 개발자', icon: '💪' },
-    { minPower: 100000, title: '시니어 개발자', icon: '🔥' },
-    { minPower: 1000000, title: '테크 리드', icon: '⚡' },
-    { minPower: 10000000, title: 'CTO', icon: '👑' },
-    { minPower: 100000000, title: '전설의 개발자', icon: '🌟' },
-    { minPower: 1000000000, title: '코딩의 신', icon: '🏆' },
-];
 
 export function getCurrentTitle(totalPower) {
     let current = titles[0];
@@ -217,16 +60,48 @@ export function getCurrentTitle(totalPower) {
     return current;
 }
 
-// 초기 게임 상태
+// 자동 성장 아이템 (가격 배율 상향: 1.15 -> 1.35~1.5)
+export const autoItems = [
+    { id: 'kb', name: '기계식 키보드', icon: '⌨️', description: '생산성 +1/s', baseCost: 15, costMultiplier: 1.3, effect: 1, owned: 0 },
+    { id: 'mon', name: '듀얼 모니터', icon: '🖥️', description: '생산성 +8/s', baseCost: 150, costMultiplier: 1.32, effect: 8, owned: 0 },
+    { id: 'pc', name: '고사양 PC', icon: '💻', description: '생산성 +45/s', baseCost: 1500, costMultiplier: 1.35, effect: 45, owned: 0 },
+    { id: 'chair', name: '인체공학 의자', icon: '🪑', description: '생산성 +250/s', baseCost: 20000, costMultiplier: 1.38, effect: 250, owned: 0 },
+    { id: 'blog', name: '기술 블로그', icon: '📰', description: '생산성 +1.2k/s', baseCost: 180000, costMultiplier: 1.4, effect: 1200, owned: 0 },
+    { id: 'os', name: '오픈소스 참여', icon: '🌍', description: '생산성 +6.5k/s', baseCost: 2500000, costMultiplier: 1.42, effect: 6500, owned: 0 },
+    { id: 'ai', name: 'AI 페어 프로그래머', icon: '🤖', description: '생산성 +40k/s', baseCost: 40000000, costMultiplier: 1.45, effect: 40000, owned: 0 },
+    { id: 'quantum', name: '양자 컴퓨터', icon: '🛸', description: '생산성 +250k/s', baseCost: 1000000000, costMultiplier: 1.5, effect: 250000, owned: 0 },
+    { id: 'galaxy', name: '은하계 서버팜', icon: '🪐', description: '생산성 +2M/s', baseCost: 50000000000, costMultiplier: 1.55, effect: 2000000, owned: 0 },
+];
+
+// 클릭 성장 아이템 (가격 배율 상향)
+export const clickItems = [
+    { id: 'py', name: 'Python 마스터', icon: '🐍', description: '클릭 +1', baseCost: 25, costMultiplier: 1.3, effect: 1, owned: 0 },
+    { id: 'js', name: 'React 딥하게', icon: '⚛️', description: '클릭 +12', baseCost: 350, costMultiplier: 1.32, effect: 12, owned: 0 },
+    { id: 'algo', name: '알고리즘 정복', icon: '🧠', description: '클릭 +80', baseCost: 4000, costMultiplier: 1.35, effect: 80, owned: 0 },
+    { id: 'arch', name: '클린 아키텍처', icon: '🏗️', description: '클릭 +650', baseCost: 60000, costMultiplier: 1.38, effect: 650, owned: 0 },
+    { id: 'multi', name: '멀티 스레딩', icon: '🧵', description: '클릭 +4k', baseCost: 1000000, costMultiplier: 1.4, effect: 4000, owned: 0 },
+    { id: 'comp', name: '컴파일러 설계', icon: '⚙️', description: '클릭 +250k', baseCost: 200000000, costMultiplier: 1.5, effect: 250000, owned: 0 },
+];
+
+// 스페셜 아이템 (초기 가격 및 배율 대폭 상향)
+export const specialItems = [
+    { id: 'crit_1', name: '집중의 눈', icon: '👁️', description: '크리티컬 확률 +5% (최대 80%)', baseCost: 5000, costMultiplier: 2.5, effect: 0.05, type: 'critical_prob', owned: 0 },
+    { id: 'crit_2', name: '예리한 통찰', icon: '✨', description: '크리티컬 위력 +2배', baseCost: 25000, costMultiplier: 3.5, effect: 2.0, type: 'critical_power', owned: 0 },
+    { id: 'legend_kb', name: '전설의 키보드', icon: '🌟', description: '클릭 효율 x10배 영구 증가 (중첩 불가)', baseCost: 1e12, costMultiplier: 100, effect: 10, type: 'permanent_mult', maxOwned: 1, owned: 0 },
+    { id: 'boost_coffee', name: '무한 동력 커피', icon: '☕', description: '1분간 전체 코딩력 +2배 (가산 중첩)', baseCost: 100000, costMultiplier: 1.8, effect: 2, duration: 60, type: 'boost', owned: 0 },
+];
+
 export const initialGameState = {
     codingPower: 0,
     totalCodingPower: 0,
     perClick: 1,
     perSecond: 0,
-    autoItems: autoItems.map(item => ({ ...item })),
-    clickItems: clickItems.map(item => ({ ...item })),
-    specialItems: specialItems.map(item => ({ ...item })),
-    boosts: [], // { id, multiplier, endTime }
+    critProb: 0.05, // 기본 5%
+    critMult: 2.0, // 기본 2배
+    autoItems: autoItems.map(it => ({ ...it })),
+    clickItems: clickItems.map(it => ({ ...it })),
+    specialItems: specialItems.map(it => ({ ...it })),
+    boosts: [],
     adRemoved: false,
     stats: {
         totalClicks: 0,

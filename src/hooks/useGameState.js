@@ -1,15 +1,19 @@
 import { useReducer, useEffect, useCallback, useRef } from 'react';
 import { initialGameState, getItemCost } from '../data/gameData';
 
-// 저장/불러오기 키
-const SAVE_KEY = 'coding_master_save';
+const SAVE_KEY = 'coding_master_advanced_save_v2'; // 밸런스 변경으로 인한 새로운 저장키
 
-// 리듀서 액션 처리
 function gameReducer(state, action) {
     switch (action.type) {
         case 'CLICK': {
+            const isCrit = Math.random() < Math.min(state.critProb, 0.8); // 최대 확률 80% 제한
             const boostMultiplier = getActiveBoostMultiplier(state.boosts);
-            const gainedPower = state.perClick * boostMultiplier;
+            let gainedPower = state.perClick * boostMultiplier;
+
+            if (isCrit) {
+                gainedPower *= state.critMult;
+            }
+
             return {
                 ...state,
                 codingPower: state.codingPower + gainedPower,
@@ -18,24 +22,22 @@ function gameReducer(state, action) {
                     ...state.stats,
                     totalClicks: state.stats.totalClicks + 1,
                 },
+                lastClickWasCrit: isCrit,
             };
         }
 
         case 'TICK': {
             const now = Date.now();
             const boostMultiplier = getActiveBoostMultiplier(state.boosts);
-            const gainedPower = (state.perSecond * boostMultiplier) / 10; // 100ms마다 호출
+            const gainedPower = (state.perSecond * boostMultiplier) / 10;
             const activeBoosts = state.boosts.filter(b => b.endTime > now);
-
-            if (gainedPower === 0 && activeBoosts.length === state.boosts.length) {
-                return state;
-            }
 
             return {
                 ...state,
                 codingPower: state.codingPower + gainedPower,
                 totalCodingPower: state.totalCodingPower + gainedPower,
                 boosts: activeBoosts,
+                lastClickWasCrit: false,
             };
         }
 
@@ -43,28 +45,20 @@ function gameReducer(state, action) {
             const { index } = action;
             const item = state.autoItems[index];
             const cost = getItemCost(item);
-
             if (state.codingPower < cost) return state;
 
-            const newItems = state.autoItems.map((it, i) => {
-                if (i !== index) return it;
-                return { ...it, owned: it.owned + 1 };
-            });
-
-            const newPerSecond = newItems.reduce(
-                (sum, it) => sum + it.effect * it.owned,
-                0
+            const newItems = state.autoItems.map((it, i) =>
+                i === index ? { ...it, owned: it.owned + 1 } : it
             );
+
+            const newPerSecond = newItems.reduce((sum, it) => sum + it.effect * it.owned, 0);
 
             return {
                 ...state,
                 codingPower: state.codingPower - cost,
                 autoItems: newItems,
                 perSecond: newPerSecond,
-                stats: {
-                    ...state.stats,
-                    totalItemsBought: state.stats.totalItemsBought + 1,
-                },
+                stats: { ...state.stats, totalItemsBought: state.stats.totalItemsBought + 1 },
             };
         }
 
@@ -72,33 +66,22 @@ function gameReducer(state, action) {
             const { index } = action;
             const item = state.clickItems[index];
             const cost = getItemCost(item);
-
             if (state.codingPower < cost) return state;
 
-            const newItems = state.clickItems.map((it, i) => {
-                if (i !== index) return it;
-                return { ...it, owned: it.owned + 1 };
-            });
+            const newItems = state.clickItems.map((it, i) =>
+                i === index ? { ...it, owned: it.owned + 1 } : it
+            );
 
-            // 기본 1 + 클릭 아이템 효과 합산
-            const newPerClick =
-                1 + newItems.reduce((sum, it) => sum + it.effect * it.owned, 0);
-
-            // 전설의 키보드 영구 효과 적용
-            const legendaryOwned =
-                state.specialItems.find(it => it.id === 'legendary_keyboard')?.owned ||
-                0;
-            const legendaryMultiplier = legendaryOwned > 0 ? 10 : 1;
+            const basePerClick = 1 + newItems.reduce((sum, it) => sum + it.effect * it.owned, 0);
+            const legendItem = state.specialItems.find(it => it.id === 'legend_kb');
+            const finalMult = (legendItem && legendItem.owned > 0) ? legendItem.effect : 1;
 
             return {
                 ...state,
                 codingPower: state.codingPower - cost,
                 clickItems: newItems,
-                perClick: newPerClick * legendaryMultiplier,
-                stats: {
-                    ...state.stats,
-                    totalItemsBought: state.stats.totalItemsBought + 1,
-                },
+                perClick: basePerClick * finalMult,
+                stats: { ...state.stats, totalItemsBought: state.stats.totalItemsBought + 1 },
             };
         }
 
@@ -106,185 +89,94 @@ function gameReducer(state, action) {
             const { index } = action;
             const item = state.specialItems[index];
             const cost = getItemCost(item);
-
             if (state.codingPower < cost) return state;
             if (item.maxOwned && item.owned >= item.maxOwned) return state;
 
-            const newItems = state.specialItems.map((it, i) => {
-                if (i !== index) return it;
-                return { ...it, owned: it.owned + 1 };
-            });
+            const newItems = state.specialItems.map((it, i) =>
+                i === index ? { ...it, owned: it.owned + 1 } : it
+            );
 
             let newState = {
                 ...state,
                 codingPower: state.codingPower - cost,
                 specialItems: newItems,
-                stats: {
-                    ...state.stats,
-                    totalItemsBought: state.stats.totalItemsBought + 1,
-                },
             };
 
-            // 부스터 활성화
+            // 특수 효과 적용
+            if (item.type === 'critical_prob') newState.critProb = Math.min(newState.critProb + item.effect, 0.8);
+            if (item.type === 'critical_power') newState.critMult += item.effect;
+            if (item.type === 'permanent_mult') {
+                const basePerClick = 1 + state.clickItems.reduce((sum, it) => sum + it.effect * it.owned, 0);
+                newState.perClick = basePerClick * item.effect;
+            }
             if (item.type === 'boost') {
-                newState.boosts = [
-                    ...state.boosts,
-                    {
-                        id: item.id,
-                        name: item.name,
-                        icon: item.icon,
-                        multiplier: item.effect,
-                        endTime: Date.now() + item.duration * 1000,
-                    },
-                ];
-            }
-
-            // 전설의 키보드 영구 효과
-            if (item.id === 'legendary_keyboard') {
-                const basePerClick =
-                    1 +
-                    state.clickItems.reduce((sum, it) => sum + it.effect * it.owned, 0);
-                newState.perClick = basePerClick * 10;
-            }
-
-            // 광고 제거
-            if (item.id === 'ad_remove') {
-                newState.adRemoved = true;
+                newState.boosts = [...state.boosts, {
+                    id: item.id + '_' + Date.now(),
+                    multiplier: item.effect,
+                    endTime: Date.now() + item.duration * 1000,
+                    name: item.name, icon: item.icon
+                }];
             }
 
             return newState;
         }
 
-        case 'ACTIVATE_AD_BOOST': {
+        case 'APPLY_AD_REWARD': {
+            const rewardBoost = {
+                id: 'ad_reward_' + Date.now(),
+                multiplier: 5, // 광고 보상도 10배 -> 5배로 현실화
+                endTime: Date.now() + 15 * 60 * 1000, // 30분 -> 15분
+                name: '광고 시청 보상',
+                icon: '🎬'
+            };
             return {
                 ...state,
-                boosts: [
-                    ...state.boosts,
-                    {
-                        id: 'ad_boost',
-                        name: '광고 부스터',
-                        icon: '📺',
-                        multiplier: 2,
-                        endTime: Date.now() + 1800 * 1000, // 30분
-                    },
-                ],
+                boosts: [...state.boosts, rewardBoost]
             };
         }
 
-        case 'LOAD_SAVE': {
-            return {
-                ...action.savedState,
-                boosts: (action.savedState.boosts || []).filter(
-                    b => b.endTime > Date.now()
-                ),
-            };
-        }
-
-        case 'RESET': {
-            return {
-                ...initialGameState,
-                autoItems: initialGameState.autoItems.map(it => ({ ...it })),
-                clickItems: initialGameState.clickItems.map(it => ({ ...it })),
-                specialItems: initialGameState.specialItems.map(it => ({ ...it })),
-                stats: { ...initialGameState.stats, startTime: Date.now() },
-            };
-        }
-
-        default:
-            return state;
+        case 'RESET': return { ...initialGameState, stats: { ...initialGameState.stats, startTime: Date.now() } };
+        case 'LOAD_SAVE': return action.payload;
+        default: return state;
     }
 }
 
-// 활성 부스터 배율 합산
 function getActiveBoostMultiplier(boosts) {
     const now = Date.now();
-    const activeBoosts = boosts.filter(b => b.endTime > now);
-    if (activeBoosts.length === 0) return 1;
-    return activeBoosts.reduce((max, b) => Math.max(max, b.multiplier), 1);
+    const active = boosts.filter(b => b.endTime > now);
+    // 곱연산(x*x) 대신 가산 방식(1 + (m1-1) + (m2-1)...)으로 변경하여 무한 폭주 방지
+    if (active.length === 0) return 1;
+    const bonus = active.reduce((acc, b) => acc + (b.multiplier - 1), 0);
+    return 1 + bonus;
 }
 
 export function useGameState() {
-    const [state, dispatch] = useReducer(gameReducer, initialGameState, init => {
-        // localStorage에서 저장된 상태 불러오기
+    const [state, dispatch] = useReducer(gameReducer, initialGameState, (init) => {
         try {
             const saved = localStorage.getItem(SAVE_KEY);
-            if (saved) {
-                const parsed = JSON.parse(saved);
-                return {
-                    ...init,
-                    ...parsed,
-                    boosts: (parsed.boosts || []).filter(b => b.endTime > Date.now()),
-                };
-            }
-        } catch (e) {
-            console.warn('저장 데이터 로드 실패:', e);
-        }
-        return {
-            ...init,
-            autoItems: init.autoItems.map(it => ({ ...it })),
-            clickItems: init.clickItems.map(it => ({ ...it })),
-            specialItems: init.specialItems.map(it => ({ ...it })),
-            stats: { ...init.stats, startTime: Date.now() },
-        };
+            return saved ? { ...init, ...JSON.parse(saved) } : init;
+        } catch { return init; }
     });
 
-    const tickRef = useRef(null);
-    const saveRef = useRef(null);
-
-    // 자동 코딩 틱 (100ms)
     useEffect(() => {
-        tickRef.current = setInterval(() => {
-            dispatch({ type: 'TICK' });
-        }, 100);
-        return () => clearInterval(tickRef.current);
+        const timer = setInterval(() => dispatch({ type: 'TICK' }), 100);
+        return () => clearInterval(timer);
     }, []);
 
-    // 자동 저장 (5초마다)
     useEffect(() => {
-        saveRef.current = setInterval(() => {
-            try {
-                localStorage.setItem(SAVE_KEY, JSON.stringify(state));
-            } catch (e) {
-                console.warn('저장 실패:', e);
-            }
-        }, 5000);
-        return () => clearInterval(saveRef.current);
+        localStorage.setItem(SAVE_KEY, JSON.stringify(state));
     }, [state]);
-
-    const click = useCallback(() => dispatch({ type: 'CLICK' }), []);
-
-    const buyAutoItem = useCallback(
-        index => dispatch({ type: 'BUY_AUTO_ITEM', index }),
-        []
-    );
-
-    const buyClickItem = useCallback(
-        index => dispatch({ type: 'BUY_CLICK_ITEM', index }),
-        []
-    );
-
-    const buySpecialItem = useCallback(
-        index => dispatch({ type: 'BUY_SPECIAL_ITEM', index }),
-        []
-    );
-
-    const activateAdBoost = useCallback(
-        () => dispatch({ type: 'ACTIVATE_AD_BOOST' }),
-        []
-    );
-
-    const resetGame = useCallback(() => {
-        localStorage.removeItem(SAVE_KEY);
-        dispatch({ type: 'RESET' });
-    }, []);
 
     return {
         state,
-        click,
-        buyAutoItem,
-        buyClickItem,
-        buySpecialItem,
-        activateAdBoost,
-        resetGame,
+        click: () => dispatch({ type: 'CLICK' }),
+        buyAutoItem: (index) => dispatch({ type: 'BUY_AUTO_ITEM', index }),
+        buyClickItem: (index) => dispatch({ type: 'BUY_CLICK_ITEM', index }),
+        buySpecialItem: (index) => dispatch({ type: 'BUY_SPECIAL_ITEM', index }),
+        applyAdReward: () => dispatch({ type: 'APPLY_AD_REWARD' }),
+        resetGame: () => {
+            localStorage.removeItem(SAVE_KEY);
+            dispatch({ type: 'RESET' });
+        }
     };
 }

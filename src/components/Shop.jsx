@@ -12,6 +12,8 @@ export default function Shop({
     onBuyAuto,
     onBuyClick,
     onBuySpecial,
+    onPlaySound,
+    onShowAd,
 }) {
     const [activeTab, setActiveTab] = useState('auto');
 
@@ -63,7 +65,12 @@ export default function Shop({
                         <div
                             key={item.id}
                             className={`item-card ${disabled ? 'item-card--disabled' : ''}`}
-                            onClick={() => !disabled && buyHandler(index)}
+                            onClick={() => {
+                                if (!disabled) {
+                                    buyHandler(index);
+                                    onPlaySound();
+                                }
+                            }}
                         >
                             <div className="item-card__icon">{item.icon}</div>
                             <div className="item-card__info">
@@ -80,6 +87,16 @@ export default function Shop({
                         </div>
                     );
                 })}
+            </div>
+
+            <div className="ad-banner">
+                <div className="ad-banner__text">실제 혜택이 쏟아지는 보상형 광고!</div>
+                <button
+                    className="ad-banner__button"
+                    onClick={onShowAd}
+                >
+                    🎬 무료 10배 부스트 받기
+                </button>
             </div>
         </div>
     );

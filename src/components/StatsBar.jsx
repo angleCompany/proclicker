@@ -1,6 +1,6 @@
 import { formatNumber } from '../data/gameData';
 
-export default function StatsBar({ state, onReset }) {
+export default function StatsBar({ state, onReset, isMuted, onToggleMute }) {
     const boostMultiplier = getActiveBoostMultiplier(state.boosts);
 
     return (
@@ -10,9 +10,14 @@ export default function StatsBar({ state, onReset }) {
                     <span className="stats-bar__title-icon">💻</span>
                     <span className="stats-bar__title-text">코딩 마스터</span>
                 </div>
-                <button className="stats-bar__reset" onClick={onReset}>
-                    🔄 초기화
-                </button>
+                <div className="stats-bar__actions">
+                    <button className="stats-bar__mute" onClick={onToggleMute}>
+                        {isMuted ? '🔇 소리 끔' : '🔊 소리 켬'}
+                    </button>
+                    <button className="stats-bar__reset" onClick={onReset}>
+                        🔄 초기화
+                    </button>
+                </div>
             </div>
 
             <div className="stats-bar__power">

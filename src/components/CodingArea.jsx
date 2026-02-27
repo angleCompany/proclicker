@@ -1,5 +1,6 @@
 import { useState, useCallback, useRef } from 'react';
 import { formatNumber, getCurrentTitle } from '../data/gameData';
+import GitGraph from './GitGraph';
 
 const CODE_BG_TEXT = `function solve(problem) {
   const skills = learn();
@@ -28,67 +29,156 @@ const api = async () => {
   return transform(data);
 };`;
 
-export default function CodingArea({ state, onClick }) {
+export default function CodingArea({ state, onClick, playClickSound }) {
     const [floatingNums, setFloatingNums] = useState([]);
+    const [particles, setParticles] = useState([]);
+    const [isShaking, setIsShaking] = useState(false);
+    const [isTyping, setIsTyping] = useState(false);
     const idCounter = useRef(0);
+    const shakeTimeout = useRef(null);
+    const containerRef = useRef(null);
 
     const handleClick = useCallback(
         e => {
             onClick();
 
-            const rect = e.currentTarget.getBoundingClientRect();
-            const x = e.clientX
-                ? e.clientX - rect.left - 100 + Math.random() * 200
-                : rect.width / 2 - 50 + Math.random() * 100;
-            const y = e.clientY
-                ? e.clientY - rect.top
-                : rect.height / 2;
+            const containerRect = containerRef.current.getBoundingClientRect();
 
+            // 컨테이너 기준 상대 좌표 계산 (0인 경우 고려)
+            const x = (e.clientX !== undefined)
+                ? e.clientX - containerRect.left
+                : containerRect.width / 2;
+            const y = (e.clientY !== undefined)
+                ? e.clientY - containerRect.top
+                : containerRect.height / 2;
+
+            const isCrit = state.lastClickWasCrit;
             const boostMult = getActiveBoostMultiplier(state.boosts);
-            const val = state.perClick * boostMult;
+            const val = state.perClick * boostMult * (isCrit ? state.critMult : 1);
+
+            // 캐릭터 애니메이션 트리거
+            setIsTyping(true);
+            setTimeout(() => setIsTyping(false), 100);
 
             const id = ++idCounter.current;
             setFloatingNums(prev => [
                 ...prev.slice(-8),
-                { id, x, y, value: val },
+                { id, x, y, value: val, isCrit },
             ]);
+
+            // 파티클 종류 확장 (숫자, 기호 + 손, 키보드)
+            const particlePool = isCrit
+                ? ['🔥', '⚡', '💻', '🚀', '💎']
+                : ['0', '1', ';', '{', '}', '⌨️', '🙌', '🖱️'];
+
+            const newParticles = Array.from({ length: isCrit ? 12 : 6 }, (_, i) => ({
+                id: `${id}-p${i}`,
+                x: x + (Math.random() - 0.5) * 40, // 약간의 분산 추가
+                y: y + (Math.random() - 0.5) * 40,
+                char: particlePool[Math.floor(Math.random() * particlePool.length)],
+                vx: (Math.random() - 0.5) * (isCrit ? 20 : 10),
+                vy: (Math.random() - 0.5) * (isCrit ? 20 : 10) - (isCrit ? 10 : 5),
+                isCrit
+            }));
+            setParticles(prev => [...prev.slice(-30), ...newParticles]);
+
+            // 화면 흔들림 (크리티컬 시 더 강하게)
+            setIsShaking(true);
+            if (shakeTimeout.current) clearTimeout(shakeTimeout.current);
+            shakeTimeout.current = setTimeout(() => setIsShaking(false), isCrit ? 300 : 150);
 
             setTimeout(() => {
                 setFloatingNums(prev => prev.filter(n => n.id !== id));
+                setParticles(prev => prev.filter(p => !p.id.startsWith(`${id}-`)));
             }, 1000);
         },
-        [onClick, state.perClick, state.boosts]
+        [onClick, state.perClick, state.boosts, state.critMult, state.lastClickWasCrit]
     );
 
     const title = getCurrentTitle(state.totalCodingPower);
+    const charImage = title.image;
 
     return (
-        <div className="coding-area">
-            <div className="coding-area__bg">{CODE_BG_TEXT}</div>
-
-            <div className="coding-area__character">{title.icon}</div>
-
-            <div className="coding-area__title-badge">
-                <span className="coding-area__title-icon">{title.icon}</span>
-                <span className="coding-area__title-text">{title.title}</span>
+        <div ref={containerRef} className={`coding-area ${isShaking ? 'shake-effect' : ''}`}>
+            {/* 배경 영역: Git 잔디 및 코드 텍스트 */}
+            <div className="coding-area__bg-container">
+                <GitGraph activityLevel={isTyping ? 5 : 1} />
+                <div className="coding-area__bg-overlay"></div>
+                <div className="coding-area__bg-text">{CODE_BG_TEXT}</div>
             </div>
 
-            <button className="click-button" onClick={handleClick}>
-                <span className="click-button__icon">⌨️</span>
-                <span className="click-button__text">코딩하기</span>
-                <span className="click-button__subtext">
-                    +{formatNumber(state.perClick * getActiveBoostMultiplier(state.boosts))}
-                </span>
-            </button>
+            <div className="coding-area__main-content">
+                {/* 상단: 캐릭터 영역 */}
+                <div className="coding-area__character-section">
+                    <div className="character-frame">
+                        {/* 오라 효과 레이어 */}
+                        {title.aura && <div className={`aura aura--${title.aura}`}></div>}
 
-            <div className="floating-numbers">
+                        <img
+                            src={charImage}
+                            alt={title.title}
+                            className={`character-img ${isTyping ? 'character-action' : ''} character-tier-${title.tier}`}
+                            style={{
+                                filter: `hue-rotate(${title.hue || 0}deg) drop-shadow(0 0 25px rgba(99, 102, 241, 0.4))`,
+                                transformOrigin: 'bottom center',
+                                width: `${(title.scale || 1) * 100}%`,
+                                height: `${(title.scale || 1) * 100}%`
+                            }}
+                        />
+
+                        {/* 액세서리 (이모지) 레이어 - 캐릭터 머리 위 */}
+                        {title.accessory && (
+                            <div className="character-accessory">
+                                {title.accessory}
+                            </div>
+                        )}
+                        {/* 광원 효과를 캐릭터 바로 뒤/아래로 밀착 */}
+                        <div className={`character-glow ${isTyping ? 'character-glow--active' : ''}`}></div>
+                    </div>
+
+                    <div className="title-badge">
+                        <span className="title-badge__icon">{title.icon}</span>
+                        <span className="title-badge__text">{title.title}</span>
+                    </div>
+                </div>
+
+                {/* 하단: 클릭 버튼 영역 */}
+                <div className="coding-area__button-section">
+                    <button className="main-click-button" onClick={handleClick}>
+                        <div className="main-click-button__content">
+                            <span className="main-click-button__icon">⌨️</span>
+                            <span className="main-click-button__text">코딩하기</span>
+                        </div>
+                        <div className="main-click-button__reward">
+                            +{formatNumber(state.perClick * getActiveBoostMultiplier(state.boosts))}
+                        </div>
+                    </button>
+                </div>
+            </div>
+
+            <div className="visual-feedback-layer">
                 {floatingNums.map(n => (
                     <span
                         key={n.id}
-                        className="floating-number"
-                        style={{ left: n.x, top: n.y }}
+                        className={`floating-val ${n.isCrit ? 'floating-val--crit' : ''}`}
+                        style={{ left: `${n.x}px`, top: `${n.y}px` }}
                     >
-                        +{formatNumber(n.value)}
+                        {n.isCrit ? 'CRITICAL! ' : ''}+{formatNumber(n.value)}
+                    </span>
+                ))}
+                {particles.map(p => (
+                    <span
+                        key={p.id}
+                        className={`custom-particle ${p.isCrit ? 'custom-particle--crit' : ''}`}
+                        style={{
+                            left: `${p.x}px`,
+                            top: `${p.y}px`,
+                            '--tx': `${p.vx * 15}px`,
+                            '--ty': `${p.vy * 15}px`,
+                            fontSize: p.isCrit ? '24px' : '16px'
+                        }}
+                    >
+                        {p.char}
                     </span>
                 ))}
             </div>
@@ -100,5 +190,7 @@ function getActiveBoostMultiplier(boosts = []) {
     const now = Date.now();
     const active = boosts.filter(b => b.endTime > now);
     if (active.length === 0) return 1;
-    return active.reduce((max, b) => Math.max(max, b.multiplier), 1);
+    // 가산 방식 적용
+    const bonus = active.reduce((acc, b) => acc + (b.multiplier - 1), 0);
+    return 1 + bonus;
 }
