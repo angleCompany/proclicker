@@ -112,15 +112,35 @@ body {
 
 /* 데스크탑: 가로 2컬럼 */
 @media (min-width: 768px) {
+  .app {
+    align-items: center;
+    /* 전체 앱 컨테이너 중앙 정렬 */
+  }
+
+  .stats-bar {
+    width: 100%;
+    max-width: 1220px;
+    /* 좌우 컨테이너 합산 최대 너비 */
+    margin: 0 auto;
+    border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+  }
+
   .app__body {
     flex-direction: row;
+    justify-content: center;
+    /* 내부 패널들 중앙 정렬 */
     height: 100%;
+    width: 100%;
+    max-width: 1220px;
+    /* 좌 540 + 우 680 = 1220 */
+    margin: 0 auto;
   }
 
   .app__left {
     min-width: 380px;
     max-width: 540px;
     border-right: 1px solid var(--border-subtle);
+    border-left: 1px solid var(--border-subtle);
     background: var(--bg-primary);
   }
 
@@ -128,6 +148,7 @@ body {
     flex: 1;
     min-width: 320px;
     max-width: 680px;
+    border-right: 1px solid var(--border-subtle);
     background: var(--bg-secondary);
   }
 }
@@ -135,7 +156,8 @@ body {
 /* 넓은 데스크탑 */
 @media (min-width: 1200px) {
   .app__left {
-    max-width: 600px;
+    max-width: 540px;
+    /* 너무 넓어지지 않도록 고정 */
   }
 }
 
