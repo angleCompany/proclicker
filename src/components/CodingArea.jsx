@@ -53,6 +53,7 @@ export default function CodingArea({ state, onClick, playClickSound }) {
                 : containerRect.height / 2;
 
             const isCrit = state.lastClickWasCrit;
+            const isLucky = state.lastClickWasLucky;
             const boostMult = getActiveBoostMultiplier(state.boosts);
             const val = state.perClick * boostMult * (isCrit ? state.critMult : 1);
 
@@ -63,24 +64,30 @@ export default function CodingArea({ state, onClick, playClickSound }) {
             const id = ++idCounter.current;
             setFloatingNums(prev => [
                 ...prev.slice(-8),
-                { id, x, y, value: val, isCrit },
+                { id, x, y, value: val, isCrit, isLucky },
             ]);
 
-            // 파티클 종류 확장 (숫자, 기호 + 손, 키보드)
-            const particlePool = isCrit
-                ? ['🔥', '⚡', '💻', '🚀', '💎']
+            // 파티클 종류 확장 (숫자, 기호 + 손, 키보드 + 별빛 추가)
+            const particlePool = isCrit || isLucky
+                ? ['⭐', '🌟', '✨', '🌠', '✨', '🔥', '⚡', '💎', '💰']
                 : ['0', '1', ';', '{', '}', '⌨️', '🙌', '🖱️'];
 
-            const newParticles = Array.from({ length: isCrit ? 12 : 6 }, (_, i) => ({
-                id: `${id}-p${i}`,
-                x: x + (Math.random() - 0.5) * 40, // 약간의 분산 추가
-                y: y + (Math.random() - 0.5) * 40,
-                char: particlePool[Math.floor(Math.random() * particlePool.length)],
-                vx: (Math.random() - 0.5) * (isCrit ? 20 : 10),
-                vy: (Math.random() - 0.5) * (isCrit ? 20 : 10) - (isCrit ? 10 : 5),
-                isCrit
-            }));
-            setParticles(prev => [...prev.slice(-30), ...newParticles]);
+            const newParticles = Array.from({ length: isCrit ? 20 : 6 }, (_, i) => {
+                const char = particlePool[Math.floor(Math.random() * particlePool.length)];
+                const isStar = ['⭐', '🌟', '✨', '🌠'].includes(char);
+
+                return {
+                    id: `${id}-p${i}`,
+                    x: x + (Math.random() - 0.5) * 20,
+                    y: y + (Math.random() - 0.5) * 20,
+                    char,
+                    vx: (Math.random() - 0.5) * (isCrit ? 30 : 10),
+                    vy: (Math.random() - 0.5) * (isCrit ? 30 : 10) - (isCrit ? 15 : 5),
+                    isCrit,
+                    isStar
+                };
+            });
+            setParticles(prev => [...prev.slice(-40), ...newParticles]);
 
             // 화면 흔들림 (크리티컬 시 더 강하게)
             setIsShaking(true);
@@ -160,22 +167,23 @@ export default function CodingArea({ state, onClick, playClickSound }) {
                 {floatingNums.map(n => (
                     <span
                         key={n.id}
-                        className={`floating-val ${n.isCrit ? 'floating-val--crit' : ''}`}
+                        className={`floating-val ${n.isCrit ? 'floating-val--crit' : ''} ${n.isLucky ? 'floating-val--lucky' : ''}`}
                         style={{ left: `${n.x}px`, top: `${n.y}px` }}
                     >
-                        {n.isCrit ? 'CRITICAL! ' : ''}+{formatNumber(n.value)}
+                        {n.isLucky ? 'BUG BOUNTY! 💰 ' : n.isCrit ? 'CRITICAL! ' : ''}+{formatNumber(n.value)}
                     </span>
                 ))}
                 {particles.map(p => (
                     <span
                         key={p.id}
-                        className={`custom-particle ${p.isCrit ? 'custom-particle--crit' : ''}`}
+                        className={`custom-particle ${p.isCrit ? 'custom-particle--crit' : ''} ${p.isStar ? 'custom-particle--star' : ''}`}
                         style={{
                             left: `${p.x}px`,
                             top: `${p.y}px`,
-                            '--tx': `${p.vx * 15}px`,
-                            '--ty': `${p.vy * 15}px`,
-                            fontSize: p.isCrit ? '24px' : '16px'
+                            '--tx': `${p.vx * 20}px`,
+                            '--ty': `${p.vy * 20}px`,
+                            fontSize: p.isStar ? '22px' : p.isCrit ? '24px' : '16px',
+                            animationDuration: p.isStar ? '1.2s' : '0.8s'
                         }}
                     >
                         {p.char}

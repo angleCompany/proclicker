@@ -1,35 +1,48 @@
 import { useReducer, useEffect, useCallback, useRef } from 'react';
-import { initialGameState, getItemCost } from '../data/gameData';
+import { initialGameState, getItemCost, getMilestoneMultiplier } from '../data/gameData';
 
-const SAVE_KEY = 'coding_master_advanced_save_v2'; // 밸런스 변경으로 인한 새로운 저장키
+const SAVE_KEY = 'coding_master_advanced_save_v3'; // 밸런스 대개편으로 인한 새로운 저장키
 
 function gameReducer(state, action) {
     switch (action.type) {
         case 'CLICK': {
-            const isCrit = Math.random() < Math.min(state.critProb, 0.8); // 최대 확률 80% 제한
+            const isCrit = Math.random() < Math.min(state.critProb, 0.8);
             const boostMultiplier = getActiveBoostMultiplier(state.boosts);
-            let gainedPower = state.perClick * boostMultiplier;
 
-            if (isCrit) {
-                gainedPower *= state.critMult;
+            // 시너지 1: 딥러닝 엔진 (초당 생산량의 일정 %를 클릭 당 추가)
+            const synergyBonus = state.perSecond * state.clickSynergy;
+            let gainedPower = (state.perClick + synergyBonus) * boostMultiplier;
+
+            if (isCrit) gainedPower *= state.critMult;
+
+            // 시너지 2: 버그 바운티 (1% 확률로 10초 생산량 획득)
+            const luckyItem = state.specialItems.find(it => it.type === 'lucky_click');
+            let luckyBonus = 0;
+            let isLucky = false;
+            if (luckyItem && luckyItem.owned > 0 && Math.random() < 0.01) {
+                luckyBonus = state.perSecond * luckyItem.effect;
+                isLucky = true;
             }
+
+            const finalGained = gainedPower + luckyBonus;
 
             return {
                 ...state,
-                codingPower: state.codingPower + gainedPower,
-                totalCodingPower: state.totalCodingPower + gainedPower,
+                codingPower: state.codingPower + finalGained,
+                totalCodingPower: state.totalCodingPower + finalGained,
                 stats: {
                     ...state.stats,
                     totalClicks: state.stats.totalClicks + 1,
                 },
                 lastClickWasCrit: isCrit,
+                lastClickWasLucky: isLucky,
             };
         }
 
         case 'TICK': {
             const now = Date.now();
             const boostMultiplier = getActiveBoostMultiplier(state.boosts);
-            const gainedPower = (state.perSecond * boostMultiplier) / 10;
+            const gainedPower = (state.perSecond * boostMultiplier * state.autoSynergy) / 10;
             const activeBoosts = state.boosts.filter(b => b.endTime > now);
 
             return {
@@ -38,20 +51,25 @@ function gameReducer(state, action) {
                 totalCodingPower: state.totalCodingPower + gainedPower,
                 boosts: activeBoosts,
                 lastClickWasCrit: false,
+                lastClickWasLucky: false,
             };
         }
 
         case 'BUY_AUTO_ITEM': {
             const { index } = action;
             const item = state.autoItems[index];
-            const cost = getItemCost(item);
+            const cost = getItemCost(item, state.globalDiscount);
             if (state.codingPower < cost) return state;
 
             const newItems = state.autoItems.map((it, i) =>
                 i === index ? { ...it, owned: it.owned + 1 } : it
             );
 
-            const newPerSecond = newItems.reduce((sum, it) => sum + it.effect * it.owned, 0);
+            // 마일스톤 반영 perSecond 계산
+            const newPerSecond = newItems.reduce((sum, it) => {
+                const milestoneMult = getMilestoneMultiplier(it.owned);
+                return sum + (it.effect * it.owned * milestoneMult);
+            }, 0);
 
             return {
                 ...state,
@@ -65,22 +83,28 @@ function gameReducer(state, action) {
         case 'BUY_CLICK_ITEM': {
             const { index } = action;
             const item = state.clickItems[index];
-            const cost = getItemCost(item);
+            const cost = getItemCost(item, state.globalDiscount);
             if (state.codingPower < cost) return state;
 
             const newItems = state.clickItems.map((it, i) =>
                 i === index ? { ...it, owned: it.owned + 1 } : it
             );
 
-            const basePerClick = 1 + newItems.reduce((sum, it) => sum + it.effect * it.owned, 0);
-            const legendItem = state.specialItems.find(it => it.id === 'legend_kb');
-            const finalMult = (legendItem && legendItem.owned > 0) ? legendItem.effect : 1;
+            // 마일스톤 반영 perClick 계산
+            const basePerClick = 1 + newItems.reduce((sum, it) => {
+                const milestoneMult = getMilestoneMultiplier(it.owned);
+                return sum + (it.effect * it.owned * milestoneMult);
+            }, 0);
+
+            // 전설의 키보드 중첩 반영
+            const legendItems = state.specialItems.filter(it => it.type === 'permanent_mult');
+            const legendMult = legendItems.reduce((acc, it) => acc * Math.pow(it.effect, it.owned), 1);
 
             return {
                 ...state,
                 codingPower: state.codingPower - cost,
                 clickItems: newItems,
-                perClick: basePerClick * finalMult,
+                perClick: basePerClick * legendMult,
                 stats: { ...state.stats, totalItemsBought: state.stats.totalItemsBought + 1 },
             };
         }
@@ -88,7 +112,7 @@ function gameReducer(state, action) {
         case 'BUY_SPECIAL_ITEM': {
             const { index } = action;
             const item = state.specialItems[index];
-            const cost = getItemCost(item);
+            const cost = getItemCost(item, state.globalDiscount);
             if (state.codingPower < cost) return state;
             if (item.maxOwned && item.owned >= item.maxOwned) return state;
 
@@ -102,20 +126,22 @@ function gameReducer(state, action) {
                 specialItems: newItems,
             };
 
-            // 특수 효과 적용
+            // 특수 효과 즉시 갱신
             if (item.type === 'critical_prob') newState.critProb = Math.min(newState.critProb + item.effect, 0.8);
             if (item.type === 'critical_power') newState.critMult += item.effect;
+            if (item.type === 'auto_synergy') newState.autoSynergy += item.effect;
+            if (item.type === 'global_discount') newState.globalDiscount = Math.min(newState.globalDiscount + item.effect, 0.5); // 최대 50% 할인
+            if (item.type === 'click_synergy') newState.clickSynergy += item.effect;
             if (item.type === 'permanent_mult') {
-                const basePerClick = 1 + state.clickItems.reduce((sum, it) => sum + it.effect * it.owned, 0);
-                newState.perClick = basePerClick * item.effect;
-            }
-            if (item.type === 'boost') {
-                newState.boosts = [...state.boosts, {
-                    id: item.id + '_' + Date.now(),
-                    multiplier: item.effect,
-                    endTime: Date.now() + item.duration * 1000,
-                    name: item.name, icon: item.icon
-                }];
+                // 이미 위에서 계산 로직에 포함됨 (re-sync)
+                const basePerClick = 1 + state.clickItems.reduce((sum, it) => {
+                    const milestoneMult = getMilestoneMultiplier(it.owned);
+                    return sum + (it.effect * it.owned * milestoneMult);
+                }, 0);
+                const legendMult = newState.specialItems
+                    .filter(it => it.type === 'permanent_mult')
+                    .reduce((acc, it) => acc * Math.pow(it.effect, it.owned), 1);
+                newState.perClick = basePerClick * legendMult;
             }
 
             return newState;

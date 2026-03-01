@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { formatNumber, getItemCost } from '../data/gameData';
+import { formatNumber, getItemCost, MILESTONES, getMilestoneMultiplier } from '../data/gameData';
 
 const TABS = [
     { id: 'auto', label: '🔄 자동 성장', key: 'autoItems' },
@@ -44,27 +44,32 @@ export default function Shop({
 
             <div className="shop__items">
                 {items.map((item, index) => {
-                    const cost = getItemCost(item);
+                    const cost = getItemCost(item, state.globalDiscount);
                     const canAfford = state.codingPower >= cost;
                     const maxReached = item.maxOwned && item.owned >= item.maxOwned;
                     const disabled = !canAfford || maxReached;
+                    const milestoneMult = getMilestoneMultiplier(item.owned);
+
+                    // 다음 마일스톤 계산
+                    const nextMilestone = MILESTONES.find(m => m.count > item.owned);
+                    const progress = nextMilestone
+                        ? (item.owned / nextMilestone.count) * 100
+                        : 100;
 
                     let effectLabel = '';
                     if (activeTab === 'auto') {
+                        const totalEffect = item.effect * item.owned * milestoneMult;
                         effectLabel = `+${formatNumber(item.effect)}/초`;
                     } else if (activeTab === 'click') {
                         effectLabel = `+${formatNumber(item.effect)}/클릭`;
                     } else {
-                        if (item.type === 'boost') effectLabel = `${item.effect}배 부스트`;
-                        else if (item.type === 'permanent')
-                            effectLabel = `${item.effect}배 영구`;
-                        else effectLabel = item.description;
+                        effectLabel = item.description;
                     }
 
                     return (
                         <div
                             key={item.id}
-                            className={`item-card ${disabled ? 'item-card--disabled' : ''}`}
+                            className={`item-card ${disabled ? 'item-card--disabled' : ''} ${milestoneMult > 1 ? 'item-card--milestone' : ''}`}
                             onClick={() => {
                                 if (!disabled) {
                                     buyHandler(index);
@@ -74,14 +79,24 @@ export default function Shop({
                         >
                             <div className="item-card__icon">{item.icon}</div>
                             <div className="item-card__info">
-                                <div className="item-card__name">{item.name}</div>
+                                <div className="item-card__name">
+                                    {item.name}
+                                    {item.owned > 0 && <span className="item-card__mult">x{milestoneMult}</span>}
+                                </div>
                                 <div className="item-card__desc">{item.description}</div>
+                                {activeTab !== 'special' && (
+                                    <div className="milestone-container">
+                                        <div className="milestone-bar" style={{ width: `${progress}%` }}></div>
+                                        <div className="milestone-text">
+                                            {nextMilestone ? `${item.owned}/${nextMilestone.count}` : 'Max Tier'}
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                             <div className="item-card__right">
                                 <div className="item-card__cost">
                                     {maxReached ? '완료' : formatNumber(cost)}
                                 </div>
-                                <div className="item-card__effect">{effectLabel}</div>
                                 <div className="item-card__owned">보유: {item.owned}</div>
                             </div>
                         </div>

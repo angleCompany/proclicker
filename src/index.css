@@ -105,7 +105,12 @@ body {
   }
 
   .app__right {
-    max-height: 42vh;
+    flex: 1;
+    /* 고정 max-height 대신 남은 영역을 유연하게 차지하도록 변경 */
+    min-height: 250px;
+    /* 상점 최소 보장 높이 */
+    max-height: 50vh;
+    /* 절반 이상 넘어가지 않게 제한 완화 */
     border-top: 1px solid var(--border-subtle);
   }
 }
@@ -485,23 +490,33 @@ body {
   font-weight: 500;
 }
 
-/* 데스크탑에서 버튼 더 크게 */
+/* 데스크탑에서 영역 및 버튼 더 크게 (PC 화면 비율 확보) */
 @media (min-width: 768px) {
-  .click-button {
-    width: 220px;
-    height: 220px;
+  .coding-area__main-content {
+    gap: 55px !important;
+    padding: 60px 20px !important;
   }
 
-  .click-button__icon {
-    font-size: 56px;
+  .character-frame {
+    width: 260px !important;
+    height: 260px !important;
   }
 
-  .click-button__text {
-    font-size: 17px;
+  .coding-area__character-section {
+    gap: 35px !important;
   }
 
-  .coding-area__character {
-    font-size: 96px;
+  .main-click-button {
+    width: 220px !important;
+    height: 220px !important;
+  }
+
+  .main-click-button__icon {
+    font-size: 56px !important;
+  }
+
+  .main-click-button__text {
+    font-size: 20px !important;
   }
 }
 
@@ -646,9 +661,9 @@ body {
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  gap: 45px;
-  /* 캐릭터와 버튼 사이 간격 확대 */
-  padding: 40px 20px;
+  gap: 20px;
+  /* 모바일 대응 축소 */
+  padding: 20px;
 }
 
 /* 캐릭터 섹션 */
@@ -656,14 +671,15 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 25px;
-  /* 타이틀 배지와의 간격 확실히 확보 */
+  gap: 15px;
+  /* 모바일 대응 축소 */
 }
 
 .character-frame {
   position: relative;
-  width: 200px;
-  height: 200px;
+  width: 140px;
+  /* 모바일 대응 (데스크탑에서 200px) */
+  height: 140px;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -849,8 +865,9 @@ body {
 /* 메인 클릭 버튼 고도화 */
 .main-click-button {
   position: relative;
-  width: 180px;
-  height: 180px;
+  width: 150px;
+  /* 모바일: 150px */
+  height: 150px;
   border-radius: 50%;
   border: 4px solid rgba(255, 255, 255, 0.05);
   background: linear-gradient(145deg, var(--bg-card-hover), var(--bg-card));
@@ -884,7 +901,7 @@ body {
 }
 
 .main-click-button__icon {
-  font-size: 36px;
+  font-size: 28px;
   margin-bottom: 2px;
 }
 
@@ -934,7 +951,44 @@ body {
   opacity: 0;
   --tx: 0px;
   --ty: 0px;
+  z-index: 15;
+  filter: drop-shadow(0 0 5px rgba(255, 255, 255, 0.3));
   animation: particle-fade-out 0.8s ease-out forwards;
+}
+
+.custom-particle--star {
+  text-shadow: 0 0 10px rgba(255, 255, 255, 0.8), 0 0 20px rgba(253, 224, 71, 0.5);
+  animation:
+    particle-fade-out 1.2s ease-out forwards,
+    star-twinkle 0.3s ease-in-out infinite alternate;
+}
+
+@keyframes star-twinkle {
+  from {
+    opacity: 0.7;
+    transform: scale(0.8) rotate(0deg);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1.2) rotate(15deg);
+  }
+}
+
+@keyframes particle-fade-out {
+  0% {
+    opacity: 1;
+    transform: translate(0, 0) scale(1.2);
+  }
+
+  20% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 0;
+    transform: translate(var(--tx), var(--ty)) scale(0.3) rotate(180deg);
+  }
 }
 
 /* =====================================================
@@ -1027,7 +1081,7 @@ body {
   transition: var(--transition);
 }
 
-.item-card:hover {
+.item-card:hover:not(.item-card--disabled) {
   background: var(--bg-card-hover);
   border-color: var(--border-glow);
   transform: translateX(2px);
@@ -1036,12 +1090,7 @@ body {
 .item-card--disabled {
   opacity: 0.4;
   cursor: not-allowed;
-}
-
-.item-card--disabled:hover {
-  background: var(--bg-card);
-  border-color: var(--border-subtle);
-  transform: none;
+  filter: grayscale(80%);
 }
 
 .item-card__icon {
@@ -1093,6 +1142,57 @@ body {
   font-size: 11px;
   color: var(--accent-success);
   font-weight: 500;
+}
+
+/* 마일스톤 및 시너지 전용 스타일 */
+.item-card__mult {
+  font-size: 10px;
+  background: linear-gradient(135deg, #6366f1, #a855f7);
+  padding: 1px 5px;
+  border-radius: 4px;
+  color: white;
+  font-weight: 800;
+  margin-left: 6px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  vertical-align: middle;
+}
+
+.milestone-container {
+  margin-top: 6px;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 2px;
+  position: relative;
+}
+
+.milestone-bar {
+  height: 100%;
+  background: linear-gradient(90deg, #6366f1, #10b981);
+  border-radius: 2px;
+  transition: width 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.milestone-text {
+  position: absolute;
+  right: 0;
+  top: -12px;
+  font-size: 9px;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.item-card--milestone {
+  border-color: rgba(99, 102, 241, 0.4) !important;
+  background: rgba(99, 102, 241, 0.03);
+}
+
+/* 버그 바운티 플로팅 효과 */
+.floating-val--lucky {
+  color: #fbbf24 !important;
+  font-weight: 900 !important;
+  text-shadow: 0 0 15px rgba(251, 191, 36, 0.8) !important;
+  font-size: 1.5rem !important;
+  z-index: 100;
 }
 
 /* 데스크탑 아이템 카드 */
@@ -1160,24 +1260,35 @@ body {
    낮은 높이 화면 보정
    ===================================================== */
 @media (max-height: 650px) and (max-width: 767px) {
-  .coding-area__character {
-    font-size: 48px;
+  .character-frame {
+    width: 100px;
+    height: 100px;
   }
 
-  .click-button {
-    width: 130px;
-    height: 130px;
+  /* 캐릭터 섹션과 버튼 사이 간격 추가 축소 */
+  .coding-area__character-section {
+    gap: 8px;
   }
 
-  .click-button__icon {
-    font-size: 30px;
+  .coding-area__main-content {
+    gap: 8px;
+    padding: 5px;
+  }
+
+  .main-click-button {
+    width: 110px;
+    height: 110px;
+  }
+
+  .main-click-button__icon {
+    font-size: 20px;
   }
 
   .stats-bar__power-value {
-    font-size: 26px;
+    font-size: 20px;
   }
 
   .coding-area {
-    padding: 12px 16px;
+    padding: 8px 12px;
   }
 }
