@@ -1,24 +1,37 @@
 import { useState, useEffect } from 'react';
 
 export default function BoostBar({ boosts = [] }) {
-    const [, forceUpdate] = useState(0);
+    // 초기값을 0으로 설정하여 렌더링 중 Date.now() 호출 방지
+    const [currentTime, setCurrentTime] = useState(0);
 
-    // 1초마다 타이머 업데이트
     useEffect(() => {
-        if (boosts.length === 0) return;
-        const interval = setInterval(() => forceUpdate(v => v + 1), 1000);
-        return () => clearInterval(interval);
+        // 동기적 호출을 피하기 위해 비동기 콜백으로 처리 (린트 규칙 준수)
+        const frame = requestAnimationFrame(() => {
+            setCurrentTime(Date.now());
+        });
+        
+        if (boosts.length === 0) {
+            return () => cancelAnimationFrame(frame);
+        }
+        
+        const interval = setInterval(() => setCurrentTime(Date.now()), 1000);
+        return () => {
+            cancelAnimationFrame(frame);
+            clearInterval(interval);
+        };
     }, [boosts.length]);
 
-    const now = Date.now();
-    const activeBoosts = boosts.filter(b => b.endTime > now);
+    // currentTime이 아직 설정되지 않았을 때는 아무것도 렌더링하지 않음
+    if (currentTime === 0) return null;
+
+    const activeBoosts = boosts.filter(b => b.endTime > currentTime);
 
     if (activeBoosts.length === 0) return null;
 
     return (
         <div className="boost-bar">
             {activeBoosts.map((boost, i) => {
-                const remaining = Math.max(0, Math.ceil((boost.endTime - now) / 1000));
+                const remaining = Math.max(0, Math.ceil((boost.endTime - currentTime) / 1000));
                 const min = Math.floor(remaining / 60);
                 const sec = remaining % 60;
 

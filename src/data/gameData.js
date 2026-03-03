@@ -3,34 +3,48 @@
 // 칭호 임계치 대폭 상향 (최종 단계 도달을 매우 어렵게 설정)
 // 칭호 및 캐릭터 진화 시스템 (21단계 세분화)
 export const titles = [
-    // [Tier 0: Beginner Base - 입문자 계층]
-    { minPower: 0, title: '코딩 입문자', icon: '🐣', image: '/characters/beginner.png', tier: 0, hue: 0, scale: 1.0 },
-    { minPower: 100, title: 'Hello World 정복자', icon: '📜', image: '/characters/beginner.png', tier: 1, hue: 45, scale: 1.02, accessory: '✨' },
-    { minPower: 1000, title: '구글링 숙련자', icon: '🔍', image: '/characters/beginner.png', tier: 2, hue: 100, scale: 1.04, accessory: '📚' },
-    { minPower: 5000, title: '견습 개발자', icon: '🐥', image: '/characters/beginner.png', tier: 3, hue: 160, scale: 1.06, accessory: '🛠️' },
-    { minPower: 20000, title: '버그와 사투하는 자', icon: '🏹', image: '/characters/beginner.png', tier: 4, hue: 210, scale: 1.08, accessory: '🦟' },
+    // [Tier 0: Beginner Base - 입문자 계층 (1~10단계)] (픽셀 아트 스타일)
+    { minPower: 0, title: '타자 치는 원숭이', icon: '🐵', image: 'https://api.dicebear.com/8.x/pixel-art/svg?seed=b1&backgroundColor=fcd5ce', tier: 0, hue: 0, scale: 1.0 },
+    { minPower: 50, title: '코딩 입문자', icon: '🐣', image: 'https://api.dicebear.com/8.x/pixel-art/svg?seed=b2&backgroundColor=b6e3f4', tier: 1, hue: 0, scale: 1.01 },
+    { minPower: 200, title: 'Hello World 정복자', icon: '📜', image: 'https://api.dicebear.com/8.x/pixel-art/svg?seed=b3&backgroundColor=c0aede', tier: 2, hue: 0, scale: 1.02, accessory: '✨' },
+    { minPower: 500, title: '세미콜론(;) 판별사', icon: '👀', image: 'https://api.dicebear.com/8.x/pixel-art/svg?seed=b4&backgroundColor=d1d4f9', tier: 3, hue: 0, scale: 1.03 },
+    { minPower: 1500, title: '구글링 숙련자', icon: '🔍', image: 'https://api.dicebear.com/8.x/pixel-art/svg?seed=b5&backgroundColor=b6e3f4', tier: 4, hue: 0, scale: 1.04, accessory: '📚' },
+    { minPower: 3000, title: '스택오버플로우 눈팅족', icon: '👀', image: 'https://api.dicebear.com/8.x/pixel-art/svg?seed=b6&backgroundColor=ffd5dc', tier: 5, hue: 0, scale: 1.05 },
+    { minPower: 7000, title: '견습 개발자', icon: '🐥', image: 'https://api.dicebear.com/8.x/pixel-art/svg?seed=b7&backgroundColor=ffdfbf', tier: 6, hue: 0, scale: 1.06, accessory: '🛠️' },
+    { minPower: 15000, title: '에러 메시지 번역기', icon: '🗣️', image: 'https://api.dicebear.com/8.x/pixel-art/svg?seed=b8&backgroundColor=d1d4f9', tier: 7, hue: 0, scale: 1.07 },
+    { minPower: 35000, title: '무한 루프 탈출자', icon: '🏃', image: 'https://api.dicebear.com/8.x/pixel-art/svg?seed=b9&backgroundColor=c0aede', tier: 8, hue: 0, scale: 1.08 },
+    { minPower: 80000, title: '버그와 사투하는 자', icon: '🏹', image: 'https://api.dicebear.com/8.x/pixel-art/svg?seed=b10&backgroundColor=fcd5ce', tier: 9, hue: 0, scale: 1.09, accessory: '🦟' },
 
-    // [Tier 1: Junior Base - 성장기 주니어 계층]
-    { minPower: 100000, title: '주니어 개발자', icon: '👨‍💻', image: '/characters/junior.png', tier: 5, hue: 0, scale: 1.1, aura: 'small' },
-    { minPower: 500000, title: '스택오버플로우 우수회원', icon: '🙋', image: '/characters/junior.png', tier: 6, hue: 40, scale: 1.12, aura: 'small', accessory: '⭐' },
-    { minPower: 2000000, title: '클린코드 전도사', icon: '🧹', image: '/characters/junior.png', tier: 7, hue: 110, scale: 1.14, aura: 'small', accessory: '💎' },
-    { minPower: 10000000, title: '리팩토링 장인', icon: '🛠️', image: '/characters/junior.png', tier: 8, hue: 180, scale: 1.16, aura: 'medium', accessory: '⚡' },
-    { minPower: 50000000, title: '중급 개발자', icon: '💪', image: '/characters/junior.png', tier: 9, hue: 260, scale: 1.18, aura: 'medium', accessory: '🔥' },
+    // [Tier 1: Junior Base - 성장기 주니어 계층 (11~20단계)] (사람 아바타 스타일)
+    { minPower: 150000, title: '주니어 개발자', icon: '👨‍💻', image: 'https://api.dicebear.com/8.x/avataaars/svg?seed=j1&backgroundColor=c0aede', tier: 10, hue: 0, scale: 1.1, aura: 'small' },
+    { minPower: 300000, title: 'ChatGPT 의존자', icon: '🤖', image: 'https://api.dicebear.com/8.x/avataaars/svg?seed=j2&backgroundColor=b6e3f4', tier: 11, hue: 0, scale: 1.11, aura: 'small' },
+    { minPower: 700000, title: '코드 복붙러(Ctrl+V)', icon: '📋', image: 'https://api.dicebear.com/8.x/avataaars/svg?seed=j3&backgroundColor=ffd5dc', tier: 12, hue: 0, scale: 1.12, aura: 'small' },
+    { minPower: 1500000, title: '스택오버플로우 답변자', icon: '🙋', image: 'https://api.dicebear.com/8.x/avataaars/svg?seed=j4&backgroundColor=ffdfbf', tier: 13, hue: 0, scale: 1.13, aura: 'small', accessory: '⭐' },
+    { minPower: 3000000, title: '주석 성애자', icon: '📝', image: 'https://api.dicebear.com/8.x/avataaars/svg?seed=j5&backgroundColor=d1d4f9', tier: 14, hue: 0, scale: 1.14, aura: 'small' },
+    { minPower: 7000000, title: '클린코드 전도사', icon: '🧹', image: 'https://api.dicebear.com/8.x/avataaars/svg?seed=j6&backgroundColor=c0aede', tier: 15, hue: 0, scale: 1.15, aura: 'small', accessory: '💎' },
+    { minPower: 15000000, title: '리팩토링 장인', icon: '🛠️', image: 'https://api.dicebear.com/8.x/avataaars/svg?seed=j7&backgroundColor=fcd5ce', tier: 16, hue: 0, scale: 1.16, aura: 'medium', accessory: '⚡' },
+    { minPower: 35000000, title: '밤샘 코더', icon: '☕', image: 'https://api.dicebear.com/8.x/avataaars/svg?seed=j8&backgroundColor=b6e3f4', tier: 17, hue: 0, scale: 1.17, aura: 'medium' },
+    { minPower: 80000000, title: '중급 개발자', icon: '💪', image: 'https://api.dicebear.com/8.x/avataaars/svg?seed=j9&backgroundColor=ffd5dc', tier: 18, hue: 0, scale: 1.18, aura: 'medium', accessory: '🔥' },
+    { minPower: 180000000, title: '깃허브 잔디농부', icon: '🌱', image: 'https://api.dicebear.com/8.x/avataaars/svg?seed=j10&backgroundColor=d1d4f9', tier: 19, hue: 0, scale: 1.19, aura: 'medium' },
 
-    // [Tier 2: Elite - 고수 계층]
-    { minPower: 2e8, title: '아키텍처 설계자', icon: '🏗️', image: '/characters/junior.png', tier: 10, hue: 320, scale: 1.2, aura: 'medium', accessory: '📐' },
-    { minPower: 1e9, title: '시니어 개발자', icon: '🔥', image: '/characters/junior.png', tier: 11, hue: 0, scale: 1.22, aura: 'large', accessory: '👔' },
-    { minPower: 5e9, title: '기술 면접관', icon: '📝', image: '/characters/junior.png', tier: 12, hue: 60, scale: 1.24, aura: 'large', accessory: '🎤' },
-    { minPower: 2e10, title: '테크 리드', icon: '⚡', image: '/characters/junior.png', tier: 13, hue: 130, scale: 1.26, aura: 'epic', accessory: '👑' },
-    { minPower: 1e11, title: 'CTO', icon: '👑', image: '/characters/junior.png', tier: 14, hue: 200, scale: 1.28, aura: 'epic', accessory: '🌍' },
+    // [Tier 2: Elite - 고수 계층 (21~28단계)] (로봇/사이보그 스타일)
+    { minPower: 400000000, title: '풀스택 마스터', icon: '🥞', image: 'https://api.dicebear.com/8.x/bottts/svg?seed=e1&backgroundColor=b6e3f4', tier: 20, hue: 0, scale: 1.2, aura: 'medium' },
+    { minPower: 1e9, title: '아키텍처 설계자', icon: '🏗️', image: 'https://api.dicebear.com/8.x/bottts/svg?seed=e2&backgroundColor=c0aede', tier: 21, hue: 0, scale: 1.22, aura: 'medium', accessory: '📐' },
+    { minPower: 2.5e9, title: '시니어 개발자', icon: '🔥', image: 'https://api.dicebear.com/8.x/bottts/svg?seed=e3&backgroundColor=ffdfbf', tier: 22, hue: 0, scale: 1.24, aura: 'large', accessory: '👔' },
+    { minPower: 6e9, title: '기술 면접관', icon: '📝', image: 'https://api.dicebear.com/8.x/bottts/svg?seed=e4&backgroundColor=ffd5dc', tier: 23, hue: 0, scale: 1.26, aura: 'large', accessory: '🎤' },
+    { minPower: 1.5e10, title: '성능 최적화 깎는 노인', icon: '⏱️', image: 'https://api.dicebear.com/8.x/bottts/svg?seed=e5&backgroundColor=d1d4f9', tier: 24, hue: 0, scale: 1.27, aura: 'large' },
+    { minPower: 4e10, title: '테크 리드', icon: '⚡', image: 'https://api.dicebear.com/8.x/bottts/svg?seed=e6&backgroundColor=fcd5ce', tier: 25, hue: 0, scale: 1.28, aura: 'epic', accessory: '👑' },
+    { minPower: 1e11, title: '데브옵스 사령관', icon: '🚀', image: 'https://api.dicebear.com/8.x/bottts/svg?seed=e7&backgroundColor=b6e3f4', tier: 26, hue: 0, scale: 1.29, aura: 'epic' },
+    { minPower: 3e11, title: 'CTO', icon: '👑', image: 'https://api.dicebear.com/8.x/bottts/svg?seed=e8&backgroundColor=c0aede', tier: 27, hue: 0, scale: 1.3, aura: 'epic', accessory: '🌍' },
 
-    // [Tier 3: God Base - 신화 수준 계층]
-    { minPower: 1e12, title: '전설의 개발자', icon: '🌟', image: '/characters/god.png', tier: 15, hue: 0, scale: 1.35, aura: 'large', accessory: '🌌' },
-    { minPower: 1e13, title: '오픈소스의 수호자', icon: '🛡️', image: '/characters/god.png', tier: 16, hue: 40, scale: 1.38, aura: 'infinite', accessory: '🦾' },
-    { minPower: 1e14, title: '시스템 설계의 신', icon: '🧠', image: '/characters/god.png', tier: 17, hue: 100, scale: 1.41, aura: 'infinite', accessory: '☄️' },
-    { minPower: 1e15, title: '코딩의 신', icon: '🏆', image: '/characters/god.png', tier: 18, hue: 180, scale: 1.44, aura: 'infinite', accessory: '🛸' },
-    { minPower: 1e18, title: '우주 웹 아키텍트', icon: '🌌', image: '/characters/god.png', tier: 19, hue: 280, scale: 1.47, aura: 'infinite', accessory: '🪐' },
-    { minPower: 1e21, title: '디지털 창조주', icon: '✨', image: '/characters/god.png', tier: 20, hue: 340, scale: 1.5, aura: 'infinite', accessory: '☀️' },
+    // [Tier 3: God Base - 신화 수준 계층 (29~35단계)] (신비로운 기하학적 형태/링)
+    { minPower: 1e12, title: '전설의 개발자', icon: '🌟', image: 'https://api.dicebear.com/8.x/rings/svg?seed=g1&backgroundColor=000000', tier: 28, hue: 0, scale: 1.35, aura: 'large', accessory: '🌌' },
+    { minPower: 5e12, title: '오픈소스의 수호자', icon: '🛡️', image: 'https://api.dicebear.com/8.x/rings/svg?seed=g2&backgroundColor=1a1a2e', tier: 29, hue: 40, scale: 1.38, aura: 'infinite', accessory: '🦾' },
+    { minPower: 2.5e13, title: 'AI를 가르치는 자', icon: '🧠', image: 'https://api.dicebear.com/8.x/rings/svg?seed=g3&backgroundColor=16213e', tier: 30, hue: 100, scale: 1.41, aura: 'infinite', accessory: '☄️' },
+    { minPower: 1e14, title: '시스템 설계의 신', icon: '📐', image: 'https://api.dicebear.com/8.x/rings/svg?seed=g4&backgroundColor=0f3460', tier: 31, hue: 140, scale: 1.43, aura: 'infinite' },
+    { minPower: 1e15, title: '코딩의 신', icon: '🏆', image: 'https://api.dicebear.com/8.x/rings/svg?seed=g5&backgroundColor=e94560', tier: 32, hue: 180, scale: 1.45, aura: 'infinite', accessory: '🛸' },
+    { minPower: 1e18, title: '우주 웹 아키텍트', icon: '🌌', image: 'https://api.dicebear.com/8.x/rings/svg?seed=g6&backgroundColor=533483', tier: 33, hue: 280, scale: 1.47, aura: 'infinite', accessory: '🪐' },
+    { minPower: 1e21, title: '디지털 창조주', icon: '✨', image: 'https://api.dicebear.com/8.x/rings/svg?seed=g7&backgroundColor=ff0055', tier: 34, hue: 340, scale: 1.5, aura: 'infinite', accessory: '☀️' },
 ];
 
 // [마일스톤 설정] 특정 보유 개수 달성 시 부여되는 효율 배율
@@ -116,7 +130,7 @@ export const clickItems = [
     { id: 'inter', name: '차원간 전송', icon: '🌌', description: '클릭 +250M', baseCost: 1e18, costMultiplier: 1.5, effect: 250000000, owned: 0 },
 ];
 
-// 스페셜 아이템 (2세대 강화)
+// 스페셜 아이템 (미니게임 및 강화)
 export const specialItems = [
     { id: 'crit_1', name: '집중의 눈', icon: '👁️', description: '크리티컬 확률 +5% (최대 80%)', baseCost: 5000, costMultiplier: 2.5, effect: 0.05, type: 'critical_prob', owned: 0 },
     { id: 'crit_2', name: '예리한 통찰', icon: '✨', description: '크리티컬 위력 +2배', baseCost: 25000, costMultiplier: 3.5, effect: 2.0, type: 'critical_power', owned: 0 },
@@ -125,6 +139,8 @@ export const specialItems = [
     { id: 'deep_learn', name: '딥러닝 엔진', icon: '🧠', description: '클릭 당 초당 생산량의 1% 만큼 추가 획득', baseCost: 2e9, costMultiplier: 50.0, effect: 0.01, type: 'click_synergy', owned: 0 },
     { id: 'bug_bounty', name: '버그 바운티', icon: '💰', description: '클릭 시 1% 확률로 10초치 생산량 즉시 획득', baseCost: 50e9, costMultiplier: 100.0, effect: 10, type: 'lucky_click', owned: 0 },
     { id: 'legend_kb', name: '전설의 키보드', icon: '🌟', description: '클릭 효율 x10배 영구 증가 (중첩 가능)', baseCost: 1e12, costMultiplier: 100, effect: 10, type: 'permanent_mult', owned: 0 },
+    // 🎲 확률형 미니게임 요소 추가 (가격은 0이지만 클릭 시 특별한 로직 실행)
+    { id: 'gamble', name: '야근 디버깅 (도박)', icon: '🎲', description: '현재 파워의 10%를 걸고 50% 확률로 2.5배 획득 (실패 시 날림)', baseCost: 100, costMultiplier: 1.0, effect: 0, type: 'gamble', maxOwned: 9999, owned: 0 },
 ];
 
 export const initialGameState = {

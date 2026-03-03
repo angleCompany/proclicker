@@ -56,16 +56,6 @@ export default function Shop({
                         ? (item.owned / nextMilestone.count) * 100
                         : 100;
 
-                    let effectLabel = '';
-                    if (activeTab === 'auto') {
-                        const totalEffect = item.effect * item.owned * milestoneMult;
-                        effectLabel = `+${formatNumber(item.effect)}/초`;
-                    } else if (activeTab === 'click') {
-                        effectLabel = `+${formatNumber(item.effect)}/클릭`;
-                    } else {
-                        effectLabel = item.description;
-                    }
-
                     return (
                         <div
                             key={item.id}
@@ -102,6 +92,16 @@ export default function Shop({
                         </div>
                     );
                 })}
+
+                {/* 🎲 도박(야근 디버깅) 결과 알림 */}
+                {activeTab === 'special' && state.lastGambleResult && (
+                    <div 
+                        key={state.lastGambleResult} 
+                        className={`gamble-result ${state.lastGambleResult.includes('성공') ? 'gamble-result--success' : 'gamble-result--fail'}`}
+                    >
+                        {state.lastGambleResult}
+                    </div>
+                )}
             </div>
 
             <div className="ad-banner">
@@ -110,7 +110,7 @@ export default function Shop({
                     className="ad-banner__button"
                     onClick={onShowAd}
                 >
-                    🎬 무료 10배 부스트 받기
+                    🎬 무료 5배 부스트 받기
                 </button>
             </div>
         </div>

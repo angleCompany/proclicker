@@ -57,6 +57,7 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   overflow: hidden;
+  touch-action: manipulation;
 }
 
 #root {
@@ -881,6 +882,10 @@ body {
     0 20px 40px rgba(0, 0, 0, 0.6),
     inset 0 0 30px rgba(99, 102, 241, 0.1);
   transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  touch-action: manipulation; /* 더블 탭 확대 완전 차단 */
+  user-select: none; /* 텍스트 선택 방지 */
+  -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent; /* 터치 시 파란색 깜빡임 방지 */
 }
 
 .main-click-button:hover {
@@ -1291,4 +1296,107 @@ body {
   .coding-area {
     padding: 8px 12px;
   }
+}
+
+/* =====================================================
+   랜덤 이벤트 (황금 쿠키) 스타일
+   ===================================================== */
+.random-event {
+  position: absolute;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  background: rgba(0, 0, 0, 0.85);
+  border: 2px solid var(--accent-tertiary);
+  border-radius: 50%;
+  width: 65px;
+  height: 65px;
+  box-shadow: 0 0 20px var(--accent-tertiary);
+  animation: floatEvent linear forwards;
+  transition: transform 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.random-event:hover {
+  transform: scale(1.2);
+  box-shadow: 0 0 35px var(--accent-tertiary), inset 0 0 15px var(--accent-tertiary);
+}
+
+.random-event--bug {
+  border-color: var(--accent-danger);
+  box-shadow: 0 0 20px rgba(239, 68, 68, 0.6);
+}
+
+.random-event--bug:hover {
+  box-shadow: 0 0 35px var(--accent-danger), inset 0 0 15px var(--accent-danger);
+}
+
+.random-event__icon {
+  font-size: 32px;
+  line-height: 1;
+}
+
+.random-event__text {
+  position: absolute;
+  bottom: -28px;
+  font-size: 11px;
+  font-weight: 800;
+  white-space: nowrap;
+  color: var(--text-primary);
+  text-shadow: 0 2px 4px rgba(0,0,0,0.9);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.2s;
+  background: rgba(0,0,0,0.6);
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.random-event:hover .random-event__text {
+  opacity: 1;
+}
+
+@keyframes floatEvent {
+  0% { transform: translate(0, 0) rotate(0deg); opacity: 0; }
+  10% { opacity: 1; transform: translate(20px, -20px) rotate(15deg); }
+  30% { transform: translate(50px, 10px) rotate(-10deg); }
+  50% { transform: translate(-30px, 40px) rotate(20deg); }
+  70% { transform: translate(-10px, -30px) rotate(-15deg); }
+  90% { opacity: 1; transform: translate(30px, 20px) rotate(5deg); }
+  100% { transform: translate(0, 0) scale(0); opacity: 0; }
+}
+
+/* =====================================================
+   갬블(도박) 결과 피드백 애니메이션
+   ===================================================== */
+.gamble-result {
+  margin-top: 10px;
+  padding: 12px;
+  border-radius: var(--radius-sm);
+  text-align: center;
+  font-weight: 800;
+  font-size: 13px;
+  animation: fadeInOut 4s forwards;
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid var(--border-subtle);
+}
+
+.gamble-result--success {
+  color: var(--accent-success);
+  border-color: rgba(16, 185, 129, 0.4);
+  box-shadow: 0 0 15px rgba(16, 185, 129, 0.2);
+}
+
+.gamble-result--fail {
+  color: var(--accent-danger);
+  border-color: rgba(239, 68, 68, 0.4);
+}
+
+@keyframes fadeInOut {
+  0% { opacity: 0; transform: translateY(-10px); }
+  10% { opacity: 1; transform: translateY(0); }
+  85% { opacity: 1; transform: translateY(0); }
+  100% { opacity: 0; transform: translateY(-10px); }
 }

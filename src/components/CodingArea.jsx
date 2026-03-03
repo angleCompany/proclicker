@@ -29,7 +29,15 @@ const api = async () => {
   return transform(data);
 };`;
 
-export default function CodingArea({ state, onClick, playClickSound }) {
+function getActiveBoostMultiplier(boosts = []) {
+    const now = Date.now();
+    const active = boosts.filter(b => b.endTime > now);
+    if (active.length === 0) return 1;
+    const bonus = active.reduce((acc, b) => acc + (b.multiplier - 1), 0);
+    return 1 + bonus;
+}
+
+export default function CodingArea({ state, onClick }) {
     const [floatingNums, setFloatingNums] = useState([]);
     const [particles, setParticles] = useState([]);
     const [isShaking, setIsShaking] = useState(false);
@@ -40,11 +48,15 @@ export default function CodingArea({ state, onClick, playClickSound }) {
 
     const handleClick = useCallback(
         e => {
-            onClick();
+            // 클릭 로직 실행 전 현재 상태를 기반으로 확률적 피드백 미리 결정
+            // (reducer 내부 로직과 동기화하기 위함)
+            const isCrit = Math.random() < Math.min(state.critProb, 0.8);
+            const luckyItem = state.specialItems.find(it => it.type === 'lucky_click');
+            const isLucky = luckyItem && luckyItem.owned > 0 && Math.random() < 0.01;
+            
+            onClick(); // 실제 점수 증가 dispatch
 
             const containerRect = containerRef.current.getBoundingClientRect();
-
-            // 컨테이너 기준 상대 좌표 계산 (0인 경우 고려)
             const x = (e.clientX !== undefined)
                 ? e.clientX - containerRect.left
                 : containerRect.width / 2;
@@ -52,12 +64,11 @@ export default function CodingArea({ state, onClick, playClickSound }) {
                 ? e.clientY - containerRect.top
                 : containerRect.height / 2;
 
-            const isCrit = state.lastClickWasCrit;
-            const isLucky = state.lastClickWasLucky;
             const boostMult = getActiveBoostMultiplier(state.boosts);
-            const val = state.perClick * boostMult * (isCrit ? state.critMult : 1);
+            const synergyBonus = state.perSecond * state.clickSynergy;
+            const luckyBonus = isLucky ? (state.perSecond * (luckyItem?.effect || 0)) : 0;
+            const val = ((state.perClick + synergyBonus) * boostMult * (isCrit ? state.critMult : 1)) + luckyBonus;
 
-            // 캐릭터 애니메이션 트리거
             setIsTyping(true);
             setTimeout(() => setIsTyping(false), 100);
 
@@ -67,7 +78,6 @@ export default function CodingArea({ state, onClick, playClickSound }) {
                 { id, x, y, value: val, isCrit, isLucky },
             ]);
 
-            // 파티클 종류 확장 (숫자, 기호 + 손, 키보드 + 별빛 추가)
             const particlePool = isCrit || isLucky
                 ? ['⭐', '🌟', '✨', '🌠', '✨', '🔥', '⚡', '💎', '💰']
                 : ['0', '1', ';', '{', '}', '⌨️', '🙌', '🖱️'];
@@ -89,7 +99,6 @@ export default function CodingArea({ state, onClick, playClickSound }) {
             });
             setParticles(prev => [...prev.slice(-40), ...newParticles]);
 
-            // 화면 흔들림 (크리티컬 시 더 강하게)
             setIsShaking(true);
             if (shakeTimeout.current) clearTimeout(shakeTimeout.current);
             shakeTimeout.current = setTimeout(() => setIsShaking(false), isCrit ? 300 : 150);
@@ -99,7 +108,7 @@ export default function CodingArea({ state, onClick, playClickSound }) {
                 setParticles(prev => prev.filter(p => !p.id.startsWith(`${id}-`)));
             }, 1000);
         },
-        [onClick, state.perClick, state.boosts, state.critMult, state.lastClickWasCrit]
+        [onClick, state.perClick, state.perSecond, state.boosts, state.critMult, state.critProb, state.clickSynergy, state.specialItems]
     );
 
     const title = getCurrentTitle(state.totalCodingPower);
@@ -107,7 +116,6 @@ export default function CodingArea({ state, onClick, playClickSound }) {
 
     return (
         <div ref={containerRef} className={`coding-area ${isShaking ? 'shake-effect' : ''}`}>
-            {/* 배경 영역: Git 잔디 및 코드 텍스트 */}
             <div className="coding-area__bg-container">
                 <GitGraph activityLevel={isTyping ? 5 : 1} />
                 <div className="coding-area__bg-overlay"></div>
@@ -115,12 +123,9 @@ export default function CodingArea({ state, onClick, playClickSound }) {
             </div>
 
             <div className="coding-area__main-content">
-                {/* 상단: 캐릭터 영역 */}
                 <div className="coding-area__character-section">
                     <div className="character-frame">
-                        {/* 오라 효과 레이어 */}
                         {title.aura && <div className={`aura aura--${title.aura}`}></div>}
-
                         <img
                             src={charImage}
                             alt={title.title}
@@ -132,24 +137,15 @@ export default function CodingArea({ state, onClick, playClickSound }) {
                                 height: `${(title.scale || 1) * 100}%`
                             }}
                         />
-
-                        {/* 액세서리 (이모지) 레이어 - 캐릭터 머리 위 */}
-                        {title.accessory && (
-                            <div className="character-accessory">
-                                {title.accessory}
-                            </div>
-                        )}
-                        {/* 광원 효과를 캐릭터 바로 뒤/아래로 밀착 */}
+                        {title.accessory && <div className="character-accessory">{title.accessory}</div>}
                         <div className={`character-glow ${isTyping ? 'character-glow--active' : ''}`}></div>
                     </div>
-
                     <div className="title-badge">
                         <span className="title-badge__icon">{title.icon}</span>
                         <span className="title-badge__text">{title.title}</span>
                     </div>
                 </div>
 
-                {/* 하단: 클릭 버튼 영역 */}
                 <div className="coding-area__button-section">
                     <button className="main-click-button" onClick={handleClick}>
                         <div className="main-click-button__content">
@@ -192,13 +188,4 @@ export default function CodingArea({ state, onClick, playClickSound }) {
             </div>
         </div>
     );
-}
-
-function getActiveBoostMultiplier(boosts = []) {
-    const now = Date.now();
-    const active = boosts.filter(b => b.endTime > now);
-    if (active.length === 0) return 1;
-    // 가산 방식 적용
-    const bonus = active.reduce((acc, b) => acc + (b.multiplier - 1), 0);
-    return 1 + bonus;
 }
