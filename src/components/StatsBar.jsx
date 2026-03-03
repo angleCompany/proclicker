@@ -1,4 +1,5 @@
 import { formatNumber } from '../data/gameData';
+import ShareButton from './ShareButton';
 
 export default function StatsBar({ state, onReset, isMuted, onToggleMute }) {
     const boostMultiplier = getActiveBoostMultiplier(state.boosts);
@@ -11,6 +12,7 @@ export default function StatsBar({ state, onReset, isMuted, onToggleMute }) {
                     <span className="stats-bar__title-text">코딩 마스터</span>
                 </div>
                 <div className="stats-bar__actions">
+                    <ShareButton state={state} />
                     <button className="stats-bar__mute" onClick={onToggleMute}>
                         {isMuted ? '🔇 소리 끔' : '🔊 소리 켬'}
                     </button>

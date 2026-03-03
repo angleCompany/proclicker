@@ -1,0 +1,65 @@
+import { useState } from 'react';
+import { getCurrentTitle, formatNumber } from '../data/gameData';
+
+export default function ShareButton({ state }) {
+    const [copied, setCopied] = useState(false);
+    const gameUrl = window.location.origin; // 현재 접속 중인 사이트 주소 (실제 배포 주소로 자동 매핑)
+
+    const generateShareText = () => {
+        const title = getCurrentTitle(state.totalCodingPower);
+        return `💻 코딩 마스터: 프로그래머 키우기 💻
+
+` +
+               `🏆 현재 칭호: [${title.title}] ${title.icon}
+` +
+               `⚡ 초당 코딩력: ${formatNumber(state.perSecond)}/s
+` +
+               `⌨️ 타건 횟수: ${formatNumber(state.stats.totalClicks)}번
+
+` +
+               `나의 잉여력을 뛰어넘을 수 있을까?
+👉 도전하기: ${gameUrl}`;
+    };
+
+    const handleCopy = async () => {
+        const text = generateShareText();
+        try {
+            await navigator.clipboard.writeText(text);
+            setCopied(true);
+            setTimeout(() => setCopied(false), 2000);
+        } catch (err) {
+            console.error('Failed to copy text: ', err);
+            alert("클립보드 복사에 실패했습니다.");
+        }
+    };
+
+    const handleTwitterShare = () => {
+        const text = generateShareText();
+        const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`;
+        window.open(twitterUrl, '_blank', 'noopener,noreferrer');
+    };
+
+    return (
+        <div className="share-container">
+            <div className="share-buttons">
+                <button 
+                    className={`share-btn share-btn--copy ${copied ? 'copied' : ''}`}
+                    onClick={handleCopy}
+                    title="클립보드에 복사하기"
+                >
+                    {copied ? '✅ 복사됨!' : '📋 스탯 복사'}
+                </button>
+                <button 
+                    className="share-btn share-btn--twitter"
+                    onClick={handleTwitterShare}
+                    title="X(Twitter)에 공유하기"
+                >
+                    <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor">
+                        <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+                    </svg>
+                    <span>자랑하기</span>
+                </button>
+            </div>
+        </div>
+    );
+}

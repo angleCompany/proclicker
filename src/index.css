@@ -1400,3 +1400,68 @@ body {
   85% { opacity: 1; transform: translateY(0); }
   100% { opacity: 0; transform: translateY(-10px); }
 }
+
+/* =====================================================
+   공유 기능 (Share Button) 스타일
+   ===================================================== */
+.share-container {
+  display: flex;
+  align-items: center;
+}
+
+.share-buttons {
+  display: flex;
+  gap: 6px;
+}
+
+.share-btn {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 10px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: var(--transition);
+  border: 1px solid var(--border-subtle);
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+}
+
+.share-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  transform: translateY(-1px);
+}
+
+.share-btn--copy {
+  color: var(--text-secondary);
+}
+
+.share-btn--copy.copied {
+  background: rgba(16, 185, 129, 0.15);
+  color: var(--accent-success);
+  border-color: var(--accent-success);
+}
+
+.share-btn--twitter {
+  background: #1DA1F2;
+  color: white;
+  border-color: #1DA1F2;
+}
+
+.share-btn--twitter:hover {
+  background: #1a91da;
+  box-shadow: 0 2px 10px rgba(29, 161, 242, 0.4);
+}
+
+/* 모바일 화면에서 스탯바 공간 확보 */
+@media (max-width: 480px) {
+  .share-btn span {
+    display: none; /* 화면이 좁을 땐 텍스트 숨기고 아이콘만 */
+  }
+  .share-btn {
+    padding: 6px;
+  }
+}
