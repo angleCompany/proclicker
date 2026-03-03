@@ -118,10 +118,10 @@ function gameReducer(state, action) {
 
             // 도박 아이템 처리 로직
             if (item.type === 'gamble') {
-                const cost = Math.floor(state.codingPower * 0.1); // 현재 파워의 10%
+                const cost = Math.floor(state.codingPower * 0.2); // 현재 파워의 20%
                 if (state.codingPower < 100 || cost < 1) return state; // 최소 조건
 
-                const isSuccess = Math.random() < 0.5;
+                const isSuccess = Math.random() < 0.3; // 성공 확률 30%
                 const newItems = state.specialItems.map((it, i) =>
                     i === index ? { ...it, owned: it.owned + 1 } : it
                 );
@@ -210,7 +210,7 @@ function gameReducer(state, action) {
             const rewardBoost = {
                 id: 'ad_reward_' + Date.now(),
                 multiplier: 2,
-                endTime: Date.now() + 15 * 60 * 1000,
+                endTime: Date.now() + 5 * 60 * 1000, // 5분
                 name: '광고 시청 보상',
                 icon: '🎬'
             };

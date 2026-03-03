@@ -140,7 +140,7 @@ export const specialItems = [
     { id: 'bug_bounty', name: '버그 바운티', icon: '💰', description: '클릭 시 1% 확률로 10초치 생산량 즉시 획득', baseCost: 50e9, costMultiplier: 100.0, effect: 10, type: 'lucky_click', owned: 0 },
     { id: 'legend_kb', name: '전설의 키보드', icon: '🌟', description: '클릭 효율 x10배 영구 증가 (중첩 가능)', baseCost: 1e12, costMultiplier: 100, effect: 10, type: 'permanent_mult', owned: 0 },
     // 🎲 확률형 미니게임 요소 추가 (가격은 0이지만 클릭 시 특별한 로직 실행)
-    { id: 'gamble', name: '야근 디버깅 (도박)', icon: '🎲', description: '현재 파워의 10%를 걸고 50% 확률로 2.5배 획득 (실패 시 날림)', baseCost: 100, costMultiplier: 1.0, effect: 0, type: 'gamble', maxOwned: 9999, owned: 0 },
+    { id: 'gamble', name: '야근 디버깅 (도박)', icon: '🎲', description: '현재 파워의 20%를 걸고 30% 확률로 2.5배 획득 (실패 시 날림)', baseCost: 100, costMultiplier: 1.0, effect: 0, type: 'gamble', maxOwned: 9999, owned: 0 },
 ];
 
 export const initialGameState = {
