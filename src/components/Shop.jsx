@@ -110,7 +110,7 @@ export default function Shop({
                     className="ad-banner__button"
                     onClick={onShowAd}
                 >
-                    🎬 무료 5배 부스트 받기
+                    🎬 무료 2배 부스트 받기
                 </button>
             </div>
         </div>

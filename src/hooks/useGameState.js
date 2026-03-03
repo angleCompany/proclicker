@@ -209,7 +209,7 @@ function gameReducer(state, action) {
         case 'APPLY_AD_REWARD': {
             const rewardBoost = {
                 id: 'ad_reward_' + Date.now(),
-                multiplier: 5,
+                multiplier: 2,
                 endTime: Date.now() + 15 * 60 * 1000,
                 name: '광고 시청 보상',
                 icon: '🎬'
