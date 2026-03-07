@@ -139,9 +139,95 @@ export const specialItems = [
     { id: 'deep_learn', name: '딥러닝 엔진', icon: '🧠', description: '클릭 당 초당 생산량의 1% 만큼 추가 획득', baseCost: 2e9, costMultiplier: 50.0, effect: 0.01, type: 'click_synergy', owned: 0 },
     { id: 'bug_bounty', name: '버그 바운티', icon: '💰', description: '클릭 시 1% 확률로 10초치 생산량 즉시 획득', baseCost: 50e9, costMultiplier: 100.0, effect: 10, type: 'lucky_click', owned: 0 },
     { id: 'legend_kb', name: '전설의 키보드', icon: '🌟', description: '클릭 효율 x10배 영구 증가 (중첩 가능)', baseCost: 1e12, costMultiplier: 100, effect: 10, type: 'permanent_mult', owned: 0 },
-    // 🎲 확률형 미니게임 요소 추가 (가격은 0이지만 클릭 시 특별한 로직 실행)
     { id: 'gamble', name: '야근 디버깅 (도박)', icon: '🎲', description: '현재 파워의 20%를 걸고 30% 확률로 2.5배 획득 (실패 시 날림)', baseCost: 100, costMultiplier: 1.0, effect: 0, type: 'gamble', maxOwned: 9999, owned: 0 },
 ];
+
+// 업적 시스템 데이터 (새로 추가)
+export const achievementsList = [
+    {
+        id: 'click_100',
+        name: '마우스 브레이커 (입문)',
+        description: '총 클릭 수 100회 달성',
+        icon: '🖱️',
+        condition: (state) => state.stats.totalClicks >= 100,
+        rewardDesc: '영구 클릭 효율 +10%',
+        applyReward: (state) => ({ ...state, clickMultiplier: (state.clickMultiplier || 1) + 0.1 })
+    },
+    {
+        id: 'click_1000',
+        name: '손목 터널 증후군',
+        description: '총 클릭 수 1,000회 달성',
+        icon: '🚑',
+        condition: (state) => state.stats.totalClicks >= 1000,
+        rewardDesc: '영구 클릭 효율 +25%',
+        applyReward: (state) => ({ ...state, clickMultiplier: (state.clickMultiplier || 1) + 0.25 })
+    },
+    {
+        id: 'power_1m',
+        name: '백만장자 개발자',
+        description: '누적 코딩 파워 1,000,000 달성',
+        icon: '💰',
+        condition: (state) => state.totalCodingPower >= 1000000,
+        rewardDesc: '자동 생산 효율 +15%',
+        applyReward: (state) => ({ ...state, autoMultiplier: (state.autoMultiplier || 1) + 0.15 })
+    },
+    {
+        id: 'item_50',
+        name: '장비충',
+        description: '아이템 총 50개 구매',
+        icon: '🛍️',
+        condition: (state) => state.stats.totalItemsBought >= 50,
+        rewardDesc: '모든 아이템 가격 5% 할인',
+        applyReward: (state) => ({ ...state, globalDiscount: Math.min(state.globalDiscount + 0.05, 0.5) })
+    },
+    {
+        id: 'gamble_10',
+        name: '타짜',
+        description: '도박(야근 디버깅) 10회 성공',
+        icon: '🃏',
+        condition: (state) => (state.stats.gambleSuccess || 0) >= 10,
+        rewardDesc: '크리티컬 확률 +5%',
+        applyReward: (state) => ({ ...state, critProb: Math.min(state.critProb + 0.05, 0.8) })
+    },
+    {
+        id: 'hackathon_winner',
+        name: '해커톤 우승자',
+        description: '해커톤에서 버그 20마리 이상 포획',
+        icon: '🏆',
+        condition: (state) => (state.stats.hackathonWins || 0) >= 1,
+        rewardDesc: '영구 클릭 효율 +5%, 영구 자동 생산 +5%',
+        applyReward: (state) => ({
+            ...state,
+            clickMultiplier: (state.clickMultiplier || 1) + 0.05,
+            autoMultiplier: (state.autoMultiplier || 1) + 0.05
+        })
+    }
+];
+
+// 획득 가능한 스타트업 지분(Equity) 계산 (예: 10억 코딩력 당 1 지분 기준, 기하급수적으로 이폭이 커짐)
+export function calculateEquity(totalCodingPower) {
+    if (totalCodingPower < 1e9) return 0; // 10억 미만은 지분 없음
+    // 10억으로 나눈 값의 제곱근 (성장 곡선 완화) + 10억 달성 기본 지분
+    return Math.floor(Math.sqrt(totalCodingPower / 1e9));
+}
+
+// -------------------------------------------------------------
+// 가챠(뽑기) 시스템: 크루(팀원) 데이터
+export const crewList = [
+    { id: 'crew_n1', name: '열정페이 인턴', grade: 'N', prob: 60, icon: '🧑‍🎓', effectDesc: '자동 생산 효율 +1%', effectType: 'auto_mult', baseEffect: 0.01 },
+    { id: 'crew_r1', name: '마감일의 대리', grade: 'R', prob: 25, icon: '👨‍💼', effectDesc: '클릭 효율 +2%', effectType: 'click_mult', baseEffect: 0.02 },
+    { id: 'crew_sr1', name: '고독한 팀장', grade: 'SR', prob: 10, icon: '🕵️', effectDesc: '상점 할인 +1%', effectType: 'discount', baseEffect: 0.01 },
+    { id: 'crew_ssr1', name: '전설의 화이트해커', grade: 'SSR', prob: 4, icon: '🥷', effectDesc: '크리티컬 위력 +0.5배', effectType: 'crit_mult', baseEffect: 0.5 },
+    { id: 'crew_ur1', name: '스티브 잡것', grade: 'UR', prob: 1, icon: '👑', effectDesc: '모든 생산량 +10%', effectType: 'all_mult', baseEffect: 0.1 }
+];
+
+// 가챠 비용 산정: 초반에는 고정비용, 후반에는 초당 생산량의 60초(1분)치로 스케일링
+export function getGachaCost(state) {
+    const baseCost = 10000; // 최소 1만 파워
+    const scalingCost = Math.floor(state.perSecond * 60);
+    return Math.max(baseCost, scalingCost);
+}
+// -------------------------------------------------------------
 
 export const initialGameState = {
     codingPower: 0,
@@ -161,6 +247,23 @@ export const initialGameState = {
     stats: {
         totalClicks: 0,
         totalItemsBought: 0,
+        gambleSuccess: 0, // 도박 성공 횟수 추적
+        hackathonWins: 0, // 해커톤 우승 횟수
         startTime: Date.now(),
     },
+    // 해커톤 전용 상태 필드
+    hackathon: {
+        isActive: false,       // 현재 진행 여부
+        bugsCaught: 0,         // 잡은 버그 수
+        timeLeft: 0,           // 남은 시간 (초)
+    },
+    achievements: [], // 달성한 업적 ID 목록
+    clickMultiplier: 1.0, // 업적용 클릭 보상 배율
+    autoMultiplier: 1.0,  // 업적용 자동 보상 배율
+    newAchievements: [], // 방금 달성한 업적(알림 팝업용, 랜더링 후 비워짐)
+    // 환생(Prestige) 시스템 전용 필드
+    equity: 0,           // 보유 지분량 (영구 패시브 보상에 사용)
+    rebirthCount: 0,     // 환생 횟수
+    // 가챠 시스템 전용 필드
+    inventory: [],       // 영입한 크루 목록 [{ id, level }]
 };

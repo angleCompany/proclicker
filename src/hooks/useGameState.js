@@ -1,5 +1,5 @@
 import { useReducer, useEffect } from 'react';
-import { initialGameState, getItemCost, getMilestoneMultiplier } from '../data/gameData';
+import { initialGameState, getItemCost, getMilestoneMultiplier, achievementsList, calculateEquity, crewList, getGachaCost } from '../data/gameData';
 
 const SAVE_KEY = 'coding_master_advanced_save_v4'; // 최적화 적용 버전
 
@@ -11,14 +11,36 @@ function getActiveBoostMultiplier(boosts) {
     return 1 + bonus;
 }
 
+// 업적 달성 여부를 검사하고 상태를 업데이트하는 헬퍼 함수
+function checkAchievements(state) {
+    let newState = { ...state };
+    let newAchievementsThisTurn = [];
+
+    achievementsList.forEach(ach => {
+        if (!newState.achievements.includes(ach.id) && ach.condition(newState)) {
+            newState.achievements.push(ach.id);
+            newAchievementsThisTurn.push(ach);
+            newState = ach.applyReward(newState);
+        }
+    });
+
+    if (newAchievementsThisTurn.length > 0) {
+        // 기존 newAchievements 배열에 새로 달성한 업적 추가 (나중에 UI에서 소비 후 비워짐)
+        newState.newAchievements = [...(newState.newAchievements || []), ...newAchievementsThisTurn];
+    }
+    return newState;
+}
+
 function gameReducer(state, action) {
     switch (action.type) {
         case 'CLICK': {
             const isCrit = Math.random() < Math.min(state.critProb, 0.8);
             const boostMultiplier = getActiveBoostMultiplier(state.boosts);
+            const achievementMultiplier = state.clickMultiplier || 1.0;
+            const equityMultiplier = 1 + (state.equity || 0) * 0.02; // 지분 1당 2%
 
             const synergyBonus = state.perSecond * state.clickSynergy;
-            let gainedPower = (state.perClick + synergyBonus) * boostMultiplier;
+            let gainedPower = (state.perClick + synergyBonus) * boostMultiplier * achievementMultiplier * equityMultiplier;
 
             if (isCrit) gainedPower *= state.critMult;
 
@@ -32,7 +54,7 @@ function gameReducer(state, action) {
 
             const finalGained = gainedPower + luckyBonus;
 
-            return {
+            const newState = {
                 ...state,
                 codingPower: state.codingPower + finalGained,
                 totalCodingPower: state.totalCodingPower + finalGained,
@@ -44,21 +66,39 @@ function gameReducer(state, action) {
                 lastClickWasLucky: isLucky,
                 lastClickId: Date.now(), // 클릭 구분용 ID 추가
             };
+
+            return checkAchievements(newState);
         }
 
         case 'TICK': {
             const now = Date.now();
             const boostMultiplier = getActiveBoostMultiplier(state.boosts);
-            const gainedPower = (state.perSecond * boostMultiplier * state.autoSynergy) / 10;
+            const achievementMultiplier = state.autoMultiplier || 1.0;
+            const equityMultiplier = 1 + (state.equity || 0) * 0.02; // 지분 1당 2%
+            const gainedPower = (state.perSecond * boostMultiplier * state.autoSynergy * achievementMultiplier * equityMultiplier) / 10;
             const activeBoosts = state.boosts.filter(b => b.endTime > now);
 
-            return {
+            const newState = {
                 ...state,
                 codingPower: state.codingPower + gainedPower,
                 totalCodingPower: state.totalCodingPower + gainedPower,
                 boosts: activeBoosts,
-                // TICK에서 클릭 피드백 정보를 초기화하지 않음
+                hackathon: {
+                    ...state.hackathon,
+                    timeLeft: Math.max(0, state.hackathon.timeLeft - 0.1) // 1Tick(0.1초) 차감
+                }
             };
+
+            // 해커톤 자동 종료 로직
+            if (state.hackathon.isActive && newState.hackathon.timeLeft === 0) {
+                const isWin = state.hackathon.bugsCaught >= 20;
+                newState.hackathon.isActive = false;
+                if (isWin) {
+                    newState.stats.hackathonWins = (newState.stats.hackathonWins || 0) + 1;
+                }
+            }
+
+            return checkAchievements(newState);
         }
 
         case 'BUY_AUTO_ITEM': {
@@ -76,13 +116,14 @@ function gameReducer(state, action) {
                 return sum + (it.effect * it.owned * milestoneMult);
             }, 0);
 
-            return {
+            const newState = {
                 ...state,
                 codingPower: state.codingPower - cost,
                 autoItems: newItems,
                 perSecond: newPerSecond,
                 stats: { ...state.stats, totalItemsBought: state.stats.totalItemsBought + 1 },
             };
+            return checkAchievements(newState);
         }
 
         case 'BUY_CLICK_ITEM': {
@@ -103,13 +144,14 @@ function gameReducer(state, action) {
             const legendItems = state.specialItems.filter(it => it.type === 'permanent_mult');
             const legendMult = legendItems.reduce((acc, it) => acc * Math.pow(it.effect, it.owned), 1);
 
-            return {
+            const newState = {
                 ...state,
                 codingPower: state.codingPower - cost,
                 clickItems: newItems,
                 perClick: basePerClick * legendMult,
                 stats: { ...state.stats, totalItemsBought: state.stats.totalItemsBought + 1 },
             };
+            return checkAchievements(newState);
         }
 
         case 'BUY_SPECIAL_ITEM': {
@@ -128,13 +170,15 @@ function gameReducer(state, action) {
 
                 if (isSuccess) {
                     const reward = cost * 2.5; // 2.5배 획득
-                    return {
+                    const newState = {
                         ...state,
                         codingPower: state.codingPower - cost + reward,
                         totalCodingPower: state.totalCodingPower + reward,
                         specialItems: newItems,
                         lastGambleResult: `도박 성공! +${Math.floor(reward)} 파워 획득! 🎰`,
+                        stats: { ...state.stats, gambleSuccess: (state.stats.gambleSuccess || 0) + 1 }
                     };
+                    return checkAchievements(newState);
                 } else {
                     return {
                         ...state,
@@ -176,7 +220,7 @@ function gameReducer(state, action) {
                 newState.perClick = basePerClick * legendMult;
             }
 
-            return newState;
+            return checkAchievements(newState);
         }
 
         case 'TRIGGER_RANDOM_EVENT': {
@@ -204,6 +248,156 @@ function gameReducer(state, action) {
                 };
             }
             return state;
+        }
+
+        case 'START_HACKATHON': {
+            // 이미 진행 중이면 무시
+            if (state.hackathon.isActive) return state;
+            return {
+                ...state,
+                hackathon: {
+                    isActive: true,
+                    bugsCaught: 0,
+                    timeLeft: 30 // 30초 시작
+                }
+            };
+        }
+
+        case 'CATCH_HACKATHON_BUG': {
+            if (!state.hackathon.isActive) return state;
+
+            const basePower = state.perSecond || 10;
+            const rewardPower = basePower * 10; // 초당 생산량의 10배를 즉시 지급
+
+            const newState = {
+                ...state,
+                codingPower: state.codingPower + rewardPower,
+                totalCodingPower: state.totalCodingPower + rewardPower,
+                hackathon: {
+                    ...state.hackathon,
+                    bugsCaught: state.hackathon.bugsCaught + 1
+                }
+            };
+            return checkAchievements(newState);
+        }
+
+        case 'SCOUT_CREW': {
+            const { amount } = action.payload; // 뽑기 횟수 (1 or 10)
+            let currentPower = state.codingPower;
+            let newInventory = [...state.inventory];
+            let pulledCrews = [];
+
+            const costPerPull = getGachaCost(state); // 일단 현재 상태 기준 고정 비용
+
+            for (let i = 0; i < amount; i++) {
+                if (currentPower < costPerPull) break;
+                currentPower -= costPerPull;
+
+                const rand = Math.random() * 100;
+                let cumulative = 0;
+                let pickedCrew = crewList[0];
+                for (const crew of crewList) {
+                    cumulative += crew.prob;
+                    if (rand <= cumulative) {
+                        pickedCrew = crew;
+                        break;
+                    }
+                }
+
+                const existingIdx = newInventory.findIndex(inv => inv.id === pickedCrew.id);
+                let isNew = false;
+                if (existingIdx >= 0) {
+                    newInventory[existingIdx] = { ...newInventory[existingIdx], level: newInventory[existingIdx].level + 1 };
+                } else {
+                    newInventory.push({ id: pickedCrew.id, level: 1 });
+                    isNew = true;
+                }
+
+                pulledCrews.push({ ...pickedCrew, isNew });
+            }
+
+            if (pulledCrews.length === 0) return state; // 1회분 비용도 없으면 무시
+
+            let newState = {
+                ...state,
+                codingPower: currentPower,
+                inventory: newInventory,
+                lastScoutedCrews: pulledCrews // UI 랜더링 (GachaReveal)용
+            };
+
+            // 뽑힌 크루들의 패시브 효과 즉각 반영
+            pulledCrews.forEach(pull => {
+                const effect = pull.baseEffect;
+                if (pull.effectType === 'auto_mult') newState.autoMultiplier += effect;
+                if (pull.effectType === 'click_mult') newState.clickMultiplier += effect;
+                if (pull.effectType === 'discount') newState.globalDiscount = Math.min(newState.globalDiscount + effect, 0.6);
+                if (pull.effectType === 'crit_mult') newState.critMult += effect;
+                if (pull.effectType === 'all_mult') {
+                    newState.autoMultiplier += effect;
+                    newState.clickMultiplier += effect;
+                }
+            });
+
+            return checkAchievements(newState);
+        }
+
+        case 'CLEAR_LAST_SCOUT': {
+            return {
+                ...state,
+                lastScoutedCrews: null
+            };
+        }
+
+        case 'REBIRTH': {
+            const earnedEquity = calculateEquity(state.totalCodingPower);
+            if (earnedEquity <= 0) return state;
+
+            let rebirthState = {
+                ...initialGameState,
+                equity: (state.equity || 0) + earnedEquity,
+                rebirthCount: (state.rebirthCount || 0) + 1,
+                achievements: [...state.achievements], // 달성한 업적 유지
+                inventory: [...(state.inventory || [])], // 고용한 크루 유지
+                stats: {
+                    ...initialGameState.stats,
+                    hackathonWins: state.stats.hackathonWins || 0,
+                    gambleSuccess: state.stats.gambleSuccess || 0,
+                    startTime: Date.now() // 시간 초기화
+                }
+            };
+
+            // 보유 중인 업적 효과(applyReward)만 초기 상태에 다시 적용
+            state.achievements.forEach(achId => {
+                const ach = achievementsList.find(a => a.id === achId);
+                if (ach) {
+                    rebirthState = ach.applyReward(rebirthState);
+                }
+            });
+
+            // 보유 중인 크루 도감 효과 복구
+            rebirthState.inventory.forEach(inv => {
+                const crew = crewList.find(c => c.id === inv.id);
+                if (crew) {
+                    const effect = crew.baseEffect * inv.level;
+                    if (crew.effectType === 'auto_mult') rebirthState.autoMultiplier += effect;
+                    if (crew.effectType === 'click_mult') rebirthState.clickMultiplier += effect;
+                    if (crew.effectType === 'discount') rebirthState.globalDiscount = Math.min(rebirthState.globalDiscount + effect, 0.6);
+                    if (crew.effectType === 'crit_mult') rebirthState.critMult += effect;
+                    if (crew.effectType === 'all_mult') {
+                        rebirthState.autoMultiplier += effect;
+                        rebirthState.clickMultiplier += effect;
+                    }
+                }
+            });
+
+            return rebirthState;
+        }
+
+        case 'CLEAR_NEW_ACHIEVEMENTS': {
+            return {
+                ...state,
+                newAchievements: []
+            };
         }
 
         case 'APPLY_AD_REWARD': {
@@ -255,6 +449,12 @@ export function useGameState() {
         buySpecialItem: (index) => dispatch({ type: 'BUY_SPECIAL_ITEM', index }),
         triggerRandomEvent: (type) => dispatch({ type: 'TRIGGER_RANDOM_EVENT', payload: { type } }),
         applyAdReward: () => dispatch({ type: 'APPLY_AD_REWARD' }),
+        startHackathon: () => dispatch({ type: 'START_HACKATHON' }),
+        catchHackathonBug: () => dispatch({ type: 'CATCH_HACKATHON_BUG' }),
+        scoutCrew: (amount) => dispatch({ type: 'SCOUT_CREW', payload: { amount } }),
+        clearLastScout: () => dispatch({ type: 'CLEAR_LAST_SCOUT' }),
+        rebirth: () => dispatch({ type: 'REBIRTH' }),
+        clearNewAchievements: () => dispatch({ type: 'CLEAR_NEW_ACHIEVEMENTS' }),
         resetGame: () => {
             localStorage.removeItem(SAVE_KEY);
             dispatch({ type: 'RESET' });

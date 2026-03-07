@@ -1,14 +1,25 @@
+/* eslint-disable */
+import { useState } from 'react';
 import { useGameState } from './hooks/useGameState';
 import StatsBar from './components/StatsBar';
 import CodingArea from './components/CodingArea';
 import BoostBar from './components/BoostBar';
 import Shop from './components/Shop';
 import RandomEvent from './components/RandomEvent';
+import Hackathon from './components/Hackathon';
+import AchievementPopup from './components/AchievementPopup';
+import AchievementModal from './components/AchievementModal';
+import RebirthModal from './components/RebirthModal';
+import CrewModal from './components/CrewModal';
+import GachaReveal from './components/GachaReveal';
 import { useSound } from './hooks/useSound';
 import { adService } from './services/adService';
 import './index.css';
 
 function App() {
+  const [showAchievements, setShowAchievements] = useState(false);
+  const [showRebirth, setShowRebirth] = useState(false);
+  const [showCrew, setShowCrew] = useState(false);
   const { isMuted, toggleMute, playClick, playBuySound } = useSound();
 
   const {
@@ -20,6 +31,9 @@ function App() {
     triggerRandomEvent,
     resetGame,
     applyAdReward,
+    rebirth,
+    scoutCrew,
+    clearLastScout,
   } = useGameState();
 
   const handleMainClick = () => {
@@ -39,6 +53,24 @@ function App() {
     }
   };
 
+  // -------------------------------------------------------------------
+  // [개발용 치트 / 디버깅 편의] 콘솔에서 window.gameState 객체를 통해 수치 강제 조작 및 테스트 가능
+  // -------------------------------------------------------------------
+  if (import.meta.env.DEV) {
+    window.gameState = state;
+    // eslint-disable-next-line
+    window.gameDispatch = {
+      click,
+      buyAutoItem,
+      buyClickItem,
+      buySpecialItem,
+      triggerRandomEvent,
+      resetGame,
+      applyAdReward
+    };
+  }
+  // -------------------------------------------------------------------
+
   if (!state) return null;
 
   const handleReset = () => {
@@ -56,7 +88,15 @@ function App() {
       }} />
 
       {/* 모바일: 상단 스탯 바 / 데스크탑: 좌측 패널에 내장 */}
-      <StatsBar state={state} onReset={handleReset} isMuted={isMuted} onToggleMute={toggleMute} />
+      <StatsBar
+        state={state}
+        onReset={handleReset}
+        isMuted={isMuted}
+        onToggleMute={toggleMute}
+        onOpenAchievements={() => setShowAchievements(true)}
+        onOpenRebirth={() => setShowRebirth(true)}
+        onOpenCrew={() => setShowCrew(true)}
+      />
 
       <div className="app__body">
         {/* 좌측 패널: 코딩 영역 */}
@@ -77,6 +117,34 @@ function App() {
           />
         </div>
       </div>
+
+      <Hackathon onPlaySound={playBuySound} />
+      <AchievementPopup />
+      {showAchievements && <AchievementModal onClose={() => setShowAchievements(false)} />}
+
+      {showRebirth && (
+        <RebirthModal
+          state={state}
+          onClose={() => setShowRebirth(false)}
+          onRebirth={rebirth}
+          onPlaySound={playBuySound}
+        />
+      )}
+
+      {showCrew && (
+        <CrewModal
+          state={state}
+          onClose={() => setShowCrew(false)}
+          onScout={scoutCrew}
+          onPlaySound={playBuySound}
+        />
+      )}
+
+      {/* 가챠 연출 오버레이 (영입 발생 시 최상단 렌더링) */}
+      <GachaReveal
+        lastScoutedCrews={state.lastScoutedCrews}
+        onClear={clearLastScout}
+      />
     </div>
   );
 }

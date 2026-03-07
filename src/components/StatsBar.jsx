@@ -1,8 +1,9 @@
 import { formatNumber } from '../data/gameData';
 import ShareButton from './ShareButton';
 
-export default function StatsBar({ state, onReset, isMuted, onToggleMute }) {
+export default function StatsBar({ state, onReset, isMuted, onToggleMute, onOpenAchievements, onOpenRebirth, onOpenCrew }) {
     const boostMultiplier = getActiveBoostMultiplier(state.boosts);
+    const showRebirthBtn = state.totalCodingPower >= 1000000000 || state.rebirthCount > 0;
 
     return (
         <div className="stats-bar">
@@ -12,6 +13,26 @@ export default function StatsBar({ state, onReset, isMuted, onToggleMute }) {
                     <span className="stats-bar__title-text">코딩 마스터</span>
                 </div>
                 <div className="stats-bar__actions">
+                    {showRebirthBtn && (
+                        <button
+                            className="stats-bar__rebirth"
+                            style={{
+                                background: 'linear-gradient(45deg, #ff4444, #ff8888)',
+                                color: 'white', border: 'none', borderRadius: '4px',
+                                padding: '5px 10px', marginRight: '5px', fontWeight: 'bold',
+                                cursor: 'pointer', animation: 'pulse 1s infinite alternate'
+                            }}
+                            onClick={onOpenRebirth}
+                        >
+                            🔥 퇴사표 던지기
+                        </button>
+                    )}
+                    <button className="stats-bar__crew" onClick={onOpenCrew} style={{ background: '#2a2a40', color: '#fff', border: '1px solid #4da6ff' }}>
+                        📇 스카웃
+                    </button>
+                    <button className="stats-bar__achievements" onClick={onOpenAchievements}>
+                        🏆 업적
+                    </button>
                     <ShareButton state={state} />
                     <button className="stats-bar__mute" onClick={onToggleMute}>
                         {isMuted ? '🔇 소리 끔' : '🔊 소리 켬'}
