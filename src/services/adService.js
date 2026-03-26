@@ -8,10 +8,11 @@ class AdService {
         this.isAdLoading = false;
         this.lastAdTime = 0;
         this.adCooldown = 5 * 60 * 1000; // 5분 쿨타임
+        this.rewardTimerSeconds = 15; // 15초 노출 시 보상
     }
 
     /**
-     * 보상형 광고 호출
+     * 보상형 광고 호출 (Kakao AdFit 배너 기반)
      * @returns {Promise<boolean>} - 광고 시청 완료 여부
      */
     async showRewardedAd() {
@@ -24,29 +25,30 @@ class AdService {
             return false;
         }
 
-        this.isAdLoading = true;
-        console.log("AdService: Loading Ad...");
-
-        // 시뮬레이션 광고 팝업 (실제 환경에서는 SDK 호출로 대체)
+        // 실제 연동 시나리오:
+        // 1. 광고 모달을 띄운다.
+        // 2. 모달 내에 AdFit 배너(ins 태그)를 렌더링한다.
+        // 3. 15초 카운트다운 후 '보상 받기' 활성화.
+        
         return new Promise((resolve) => {
-            const confirmed = window.confirm(
-                "🎬 [광고 시청 중...]\n\n" +
-                "30초 동안 광고를 시청하고 강력한 보상(30분간 코딩력 10배)을 받으시겠습니까?\n" +
-                "(현재는 개발용 시뮬레이션 모드입니다)"
-            );
-
-            // 시뮬레이션 대기 (실제로는 비디오 플레이어 종료 시점)
-            setTimeout(() => {
-                this.isAdLoading = false;
-                if (confirmed) {
-                    this.lastAdTime = Date.now();
-                    console.log("AdService: Ad Completed. Rewarding User.");
-                    resolve(true);
-                } else {
-                    console.log("AdService: Ad Cancelled.");
-                    resolve(false);
-                }
-            }, 500); // 테스트를 위해 짧게 대기
+            this.isAdLoading = true;
+            
+            // 전역 상대로 광고 노출 이벤트를 보냄 (UI에서 감지)
+            const event = new CustomEvent('SHOW_AD_MODAL', { 
+                detail: { 
+                    seconds: this.rewardTimerSeconds,
+                    onComplete: () => {
+                        this.isAdLoading = false;
+                        this.lastAdTime = Date.now();
+                        resolve(true);
+                    },
+                    onCancel: () => {
+                        this.isAdLoading = false;
+                        resolve(false);
+                    }
+                } 
+            });
+            window.dispatchEvent(event);
         });
     }
 

@@ -1465,3 +1465,155 @@ body {
     padding: 6px;
   }
 }
+
+/* =====================================================
+   Ad Modal & Kakao AdFit
+   ===================================================== */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.85);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 10000;
+  backdrop-filter: blur(4px);
+  animation: fadeIn 0.2s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.ad-modal {
+  background: var(--bg-card);
+  border: 1px solid var(--border-glow);
+  border-radius: var(--radius-lg);
+  padding: 24px;
+  width: 90%;
+  max-width: 400px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  box-shadow: var(--shadow-lg), var(--shadow-glow);
+  animation: modalPop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.ad-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.ad-modal-header h3 {
+  font-size: 18px;
+  color: var(--text-primary);
+}
+
+.ad-modal-timer {
+  background: rgba(239, 68, 68, 0.1);
+  color: var(--accent-danger);
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: 14px;
+}
+
+.ad-modal-content {
+  background: #000;
+  border-radius: var(--radius);
+  min-height: 120px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+  border: 1px solid var(--border-subtle);
+  text-align: center;
+}
+
+/* Kakao AdFit 내부 iframe 강제 중앙 정렬 */
+.kakao_ad_area {
+  margin: 0 auto !important;
+  display: block !important;
+}
+
+.ad-modal-placeholder {
+  text-align: center;
+  padding: 20px;
+  color: var(--text-muted);
+}
+
+.ad-modal-placeholder p {
+  font-size: 13px;
+  margin-bottom: 4px;
+}
+
+.ad-modal-placeholder .smallText {
+  font-size: 11px;
+  opacity: 0.6;
+}
+
+.ad-modal-footer {
+  display: flex;
+  gap: 12px;
+}
+
+.ad-modal-btn {
+  flex: 1;
+  padding: 12px;
+  border-radius: var(--radius);
+  border: none;
+  font-weight: 700;
+  cursor: pointer;
+  transition: var(--transition);
+  font-family: var(--font-sans);
+}
+
+.ad-modal-btn--cancel {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-secondary);
+}
+
+.ad-modal-btn--cancel:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.ad-modal-btn--collect {
+  background: var(--accent-primary);
+  color: white;
+  box-shadow: 0 4px 12px var(--accent-primary-glow);
+}
+
+.ad-modal-btn--collect:disabled {
+  background: #333;
+  color: #666;
+  box-shadow: none;
+  cursor: not-allowed;
+}
+
+.ad-modal-btn--collect:not(:disabled):hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px var(--accent-primary-glow);
+}
+
+@keyframes modalPop {
+  0% { transform: scale(0.9); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.pulse {
+  animation: btnPulse 1.5s infinite;
+}
+
+@keyframes btnPulse {
+  0% { transform: scale(1); box-shadow: 0 4px 12px var(--accent-primary-glow); }
+  50% { transform: scale(1.03); box-shadow: 0 4px 20px var(--accent-primary); }
+  100% { transform: scale(1); box-shadow: 0 4px 12px var(--accent-primary-glow); }
+}

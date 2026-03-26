@@ -12,6 +12,7 @@ import AchievementModal from './components/AchievementModal';
 import RebirthModal from './components/RebirthModal';
 import CrewModal from './components/CrewModal';
 import GachaReveal from './components/GachaReveal';
+import AdModal from './components/AdModal';
 import { useSound } from './hooks/useSound';
 import { adService } from './services/adService';
 import './index.css';
@@ -20,6 +21,7 @@ function App() {
   const [showAchievements, setShowAchievements] = useState(false);
   const [showRebirth, setShowRebirth] = useState(false);
   const [showCrew, setShowCrew] = useState(false);
+  const [adConfig, setAdConfig] = useState(null);
   const { isMuted, toggleMute, playClick, playBuySound } = useSound();
 
   const {
@@ -35,6 +37,15 @@ function App() {
     scoutCrew,
     clearLastScout,
   } = useGameState();
+
+  // 광고 전용 이벤트 리스너
+  useState(() => {
+    const handleShowAd = (e) => {
+      setAdConfig(e.detail);
+    };
+    window.addEventListener('SHOW_AD_MODAL', handleShowAd);
+    return () => window.removeEventListener('SHOW_AD_MODAL', handleShowAd);
+  }, []);
 
   const handleMainClick = () => {
     click();
@@ -145,6 +156,20 @@ function App() {
         lastScoutedCrews={state.lastScoutedCrews}
         onClear={clearLastScout}
       />
+
+      {adConfig && (
+        <AdModal
+          seconds={adConfig.seconds}
+          onComplete={() => {
+            adConfig.onComplete();
+            setAdConfig(null);
+          }}
+          onCancel={() => {
+            adConfig.onCancel();
+            setAdConfig(null);
+          }}
+        />
+      )}
     </div>
   );
 }
