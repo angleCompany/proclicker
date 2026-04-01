@@ -30,9 +30,14 @@ http://localhost:5173
     * **야근 커피**: 30분 동안 모든 코딩력 획득량을 2배로 증가시킵니다.
     * **CTO의 조언**: 10분 동안 획득량을 5배로 폭발시킵니다!
     * **전설의 키보드**: 1회 한정 영구 아이템으로, 기본 클릭 획득량을 10배로 만듭니다.
-* **칭호 시스템**: 누적 획득 코딩력에 따라 "코딩 입문자"부터 "코딩의 신"까지 9단계로 칭호가 진화합니다.
-* **보상형 광고 부스터**: 화면 하단 광고 시청(가상)을 통해 30분간 2배 부스터를 즉시 획득합니다.
-* **자동 저장**: 5초마다 현재 진행 상황이 `localStorage`에 자동 저장되어 브라우저를 껐다 켜도 안심할 수 있습니다.
+* **크루 영입 및 환생 시스템**:
+    - **크루 영입 (가챠)**: 코딩력을 소모하여 다양한 크루(인턴~전설급)를 영입해 영구적인 버프를 얻습니다.
+    - **환생 (Rebirth)**: 누적 코딩력을 지분(Equity)으로 변환하여 더 강력한 성장을 시작합니다.
+
+* **칭호 및 업적 시스템**:
+    - 누적 코딩력에 따른 칭호 진화 및 다양한 도전 과제를 통한 보상을 획득합니다.
+
+* **자동 저장**: 2초마다 현재 진행 상황이 `localStorage`에 자동 저장됩니다.
 
 ## 🛠 기술 스택 (Tech Stack)
 
@@ -53,22 +58,31 @@ http://localhost:5173
 clicker_game/
 ├── public/                 # 정적 에셋 (favicon 등)
 ├── src/
-│   ├── components/         # 분할된 React UI 컴포넌트
-│   │   ├── AdBanner.jsx    # "광고 보고 부스트 얻기" 배너
-│   │   ├── BoostBar.jsx    # 활성 부스터 남은 시간 타이머
-│   │   ├── CodingArea.jsx  # 메인 중앙 탭핑(클릭) 및 이펙트 처리 영역
-│   │   ├── Shop.jsx        # 아이템 진열 및 구매 상점
-│   │   └── StatsBar.jsx    # 최상단 코딩력 및 초당/클릭당 스탯 표시
+│   ├── components/         # UI 컴포넌트
+│   │   ├── AchievementModal.jsx # 업적 목록 모달
+│   │   ├── AchievementPopup.jsx # 업적 달성 알림
+│   │   ├── AdModal.jsx     # 광고(부스터) 시청 모달
+│   │   ├── BoostBar.jsx    # 활성 부스터 상태
+│   │   ├── CodingArea.jsx  # 클릭 및 이펙트 처리
+│   │   ├── CrewModal.jsx   # 크루 영입(가챠) 화면
+│   │   ├── GachaReveal.jsx # 가챠 연출 오버레이
+│   │   ├── Hackathon.jsx   # 해커톤 미니게임
+│   │   ├── RebirthModal.jsx# 환생(Rebirth) 안내
+│   │   ├── Shop.jsx        # 아이템 구매 및 업그레이드
+│   │   └── StatsBar.jsx    # 상단 스탯 및 메뉴
 │   ├── data/
-│   │   └── gameData.js     # 아이템/칭호 정의, 비용 연산 및 숫자 포맷팅 유틸
+│   │   └── gameData.js     # 데이터 및 유틸리티
 │   ├── hooks/
-│   │   └── useGameState.js # useReducer를 활용한 핵심 게임 비즈니스 로직
-│   ├── App.jsx             # 최상위 컴포넌트, 레이아웃 조립 및 상태 프로바이딩
-│   ├── index.css           # 반응형/다크테마 디자인 시스템이 선언된 전역 CSS
-│   └── main.jsx            # React 엔트리 포인트
+│   │   ├── useGameState.js # 핵심 게임 로직 (Reducer)
+│   │   └── useSound.js     # 효과음 처리
+│   ├── services/
+│   │   └── adService.js    # 광고(AdFit) 서비스 연동
+│   ├── App.jsx             # 메인 앱 컴포넌트
+│   ├── index.css           # 전역 스타일 및 디자인 시스템
+│   └── main.jsx            # 엔트리 포인트
 ├── index.html              # HTML 템플릿
 ├── package.json            # npm 설정
-└── vite.config.js          # Vite 빌드/개발 서버 설정
+└── vite.config.js          # Vite 설정
 ```
 
 ## 📜 라이선스

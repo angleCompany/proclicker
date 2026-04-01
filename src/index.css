@@ -103,15 +103,20 @@ body {
 @media (max-width: 767px) {
   .app__body {
     flex-direction: column;
+    overflow-y: auto; /* 핵심: 본문 전체를 스크롤 가능하게 함 */
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .app__left {
+    flex: none; /* 공간 차지 방식 변경 */
+    height: auto;
+    min-height: 400px; /* 코딩 영역 최소 높이 확보 */
+    overflow: visible;
   }
 
   .app__right {
-    flex: 1;
-    /* 고정 max-height 대신 남은 영역을 유연하게 차지하도록 변경 */
-    min-height: 250px;
-    /* 상점 최소 보장 높이 */
-    max-height: 50vh;
-    /* 절반 이상 넘어가지 않게 제한 완화 */
+    flex: none;
+    min-height: 450px; /* 상점 영역 최소 높이 확보 */
     border-top: 1px solid var(--border-subtle);
   }
 }
@@ -206,7 +211,43 @@ body {
 .stats-bar__actions {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
+  flex-wrap: wrap; /* 좁은 화면에서 줄바꿈 허용 */
+  justify-content: flex-end;
+}
+
+@media (max-width: 600px) {
+  .stats-bar {
+    padding: 8px 10px;
+  }
+  
+  .stats-bar__title-row {
+    flex-direction: column; /* 세로로 배치하여 공간 확보 */
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .stats-bar__actions {
+    width: 100%;
+    justify-content: flex-start;
+    gap: 5px;
+    flex-wrap: wrap; /* 다닥다닥 붙지 않게 줄바꿈 */
+  }
+
+  .stats-bar__actions button {
+    padding: 6px 10px;
+    font-size: 11px;
+    flex-grow: 1; /* 가득 차게 */
+  }
+
+  .stats-bar__actions .btn-text {
+    display: none; /* 여전히 텍스트는 숨김 */
+  }
+  
+  .stats-bar__title-text {
+    font-size: 14px;
+    font-weight: 800;
+  }
 }
 
 .stats-bar__mute,
@@ -589,6 +630,14 @@ body {
   background: var(--bg-dark);
 }
 
+@media (max-width: 767px) {
+  .coding-area {
+    height: auto; /* 고정 높이 해제 */
+    min-height: 420px;
+    padding-bottom: 30px;
+  }
+}
+
 /* 배경: Git 잔디 시스템 */
 .coding-area__bg-container {
   position: absolute;
@@ -667,6 +716,15 @@ body {
   padding: 20px;
 }
 
+@media (max-width: 767px) {
+  .coding-area__main-content {
+    height: auto;
+    min-height: 400px;
+    justify-content: flex-start; /* 모바일에서는 위에서부터 상점과 자연스럽게 연결 */
+    padding-top: 40px;
+  }
+}
+
 /* 캐릭터 섹션 */
 .coding-area__character-section {
   display: flex;
@@ -678,9 +736,12 @@ body {
 
 .character-frame {
   position: relative;
-  width: 140px;
-  /* 모바일 대응 (데스크탑에서 200px) */
-  height: 140px;
+  width: 32vmin; /* 화면 크기에 맞춰 더 유연하게 */
+  max-width: 180px;
+  min-width: 90px;
+  height: 32vmin;
+  max-height: 180px;
+  min-height: 90px;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -866,9 +927,12 @@ body {
 /* 메인 클릭 버튼 고도화 */
 .main-click-button {
   position: relative;
-  width: 150px;
-  /* 모바일: 150px */
-  height: 150px;
+  width: 40vmin;
+  max-width: 180px;
+  min-width: 100px;
+  height: 40vmin;
+  max-height: 180px;
+  min-height: 100px;
   border-radius: 50%;
   border: 4px solid rgba(255, 255, 255, 0.05);
   background: linear-gradient(145deg, var(--bg-card-hover), var(--bg-card));
@@ -1264,37 +1328,36 @@ body {
 /* =====================================================
    낮은 높이 화면 보정
    ===================================================== */
-@media (max-height: 650px) and (max-width: 767px) {
-  .character-frame {
-    width: 100px;
-    height: 100px;
-  }
-
-  /* 캐릭터 섹션과 버튼 사이 간격 추가 축소 */
-  .coding-area__character-section {
-    gap: 8px;
-  }
-
+/* 저사양/초소형 화면 추가 보완 */
+@media (max-height: 700px) and (max-width: 767px) {
   .coding-area__main-content {
-    gap: 8px;
-    padding: 5px;
+    gap: 12px; /* 간격 축소 */
+    padding: 10px;
   }
-
-  .main-click-button {
-    width: 110px;
-    height: 110px;
+  
+  .stats-bar__power-value {
+    font-size: 24px;
   }
-
-  .main-click-button__icon {
-    font-size: 20px;
+  
+  .stats-bar__power {
+    margin-bottom: 4px;
   }
+}
 
+@media (max-height: 600px) and (max-width: 767px) {
+  .stats-bar {
+    padding: 4px 10px;
+  }
   .stats-bar__power-value {
     font-size: 20px;
   }
-
-  .coding-area {
-    padding: 8px 12px;
+  .character-frame {
+    width: 25vmin;
+    height: 25vmin;
+  }
+  .main-click-button {
+    width: 30vmin;
+    height: 30vmin;
   }
 }
 

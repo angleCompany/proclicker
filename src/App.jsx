@@ -1,5 +1,4 @@
-/* eslint-disable */
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useGameState } from './hooks/useGameState';
 import StatsBar from './components/StatsBar';
 import CodingArea from './components/CodingArea';
@@ -39,7 +38,7 @@ function App() {
   } = useGameState();
 
   // 광고 전용 이벤트 리스너
-  useState(() => {
+  useEffect(() => {
     const handleShowAd = (e) => {
       setAdConfig(e.detail);
     };
@@ -67,19 +66,20 @@ function App() {
   // -------------------------------------------------------------------
   // [개발용 치트 / 디버깅 편의] 콘솔에서 window.gameState 객체를 통해 수치 강제 조작 및 테스트 가능
   // -------------------------------------------------------------------
-  if (import.meta.env.DEV) {
-    window.gameState = state;
-    // eslint-disable-next-line
-    window.gameDispatch = {
-      click,
-      buyAutoItem,
-      buyClickItem,
-      buySpecialItem,
-      triggerRandomEvent,
-      resetGame,
-      applyAdReward
-    };
-  }
+  useEffect(() => {
+    if (import.meta.env.DEV) {
+      window.gameState = state;
+      window.gameDispatch = {
+        click,
+        buyAutoItem,
+        buyClickItem,
+        buySpecialItem,
+        triggerRandomEvent,
+        resetGame,
+        applyAdReward
+      };
+    }
+  }, [state, click, buyAutoItem, buyClickItem, buySpecialItem, triggerRandomEvent, resetGame, applyAdReward]);
   // -------------------------------------------------------------------
 
   if (!state) return null;

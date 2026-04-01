@@ -28,17 +28,17 @@ export default function StatsBar({ state, onReset, isMuted, onToggleMute, onOpen
                         </button>
                     )}
                     <button className="stats-bar__crew" onClick={onOpenCrew} style={{ background: '#2a2a40', color: '#fff', border: '1px solid #4da6ff' }}>
-                        📇 스카웃
+                        <span>📇</span> <span className="btn-text">스카웃</span>
                     </button>
                     <button className="stats-bar__achievements" onClick={onOpenAchievements}>
-                        🏆 업적
+                        <span>🏆</span> <span className="btn-text">업적</span>
                     </button>
                     <ShareButton state={state} />
                     <button className="stats-bar__mute" onClick={onToggleMute}>
-                        {isMuted ? '🔇 소리 끔' : '🔊 소리 켬'}
+                        <span>{isMuted ? '🔇' : '🔊'}</span> <span className="btn-text">{isMuted ? '소리 끔' : '소리 켬'}</span>
                     </button>
                     <button className="stats-bar__reset" onClick={onReset}>
-                        🔄 초기화
+                        <span>🔄</span> <span className="btn-text">초기화</span>
                     </button>
                 </div>
             </div>
