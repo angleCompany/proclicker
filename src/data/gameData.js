@@ -316,4 +316,5 @@ export const initialGameState = {
             powerEarned: 0,
         },
     },
+    _questResetNeeded: false,
 };

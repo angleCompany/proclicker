@@ -50,6 +50,11 @@ function updateQuestProgress(state) {
         const completed = current >= def.target;
         return { ...q, current, completed };
     });
+    const hasChanged = updatedQuests.some((q, i) => {
+        const old = state.dailyQuests.quests[i];
+        return q.current !== old.current || q.completed !== old.completed;
+    });
+    if (!hasChanged) return state;
     return { ...state, dailyQuests: { ...state.dailyQuests, quests: updatedQuests } };
 }
 
@@ -96,6 +101,10 @@ function gameReducer(state, action) {
             return { ...state, offlineReward: null };
 
         case 'TICK': {
+            const todayKST = getKSTDateString();
+            if (state.dailyQuests?.date && state.dailyQuests.date !== todayKST) {
+                return { ...state, _questResetNeeded: true };
+            }
             const now = Date.now();
             const boostMultiplier = getActiveBoostMultiplier(state.boosts);
             const achievementMultiplier = state.autoMultiplier || 1.0;
@@ -205,12 +214,12 @@ function gameReducer(state, action) {
                     };
                     return updateQuestProgress(checkAchievements(newState));
                 } else {
-                    return {
+                    return updateQuestProgress({
                         ...state,
                         codingPower: state.codingPower - cost,
                         specialItems: newItems,
                         lastGambleResult: `도박 실패... -${Math.floor(cost)} 파워 증발 💸`,
-                    };
+                    });
                 }
             }
 
@@ -458,7 +467,8 @@ function gameReducer(state, action) {
             if (!def) return state;
             let newState = { ...state };
             if (def.reward.type === 'production_boost') {
-                const boost = state.perSecond * def.reward.minutes * 60;
+                const baseBoost = state.perSecond * def.reward.minutes * 60;
+                const boost = baseBoost > 0 ? baseBoost : state.perClick * 100;
                 newState.codingPower += boost;
                 newState.totalCodingPower += boost;
             } else if (def.reward.type === 'click_mult_buff') {
