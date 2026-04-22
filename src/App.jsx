@@ -12,6 +12,7 @@ import RebirthModal from './components/RebirthModal';
 import CrewModal from './components/CrewModal';
 import GachaReveal from './components/GachaReveal';
 import AdModal from './components/AdModal';
+import OfflineRewardModal from './components/OfflineRewardModal';
 import { useSound } from './hooks/useSound';
 import { adService } from './services/adService';
 import './index.css';
@@ -35,6 +36,7 @@ function App() {
     rebirth,
     scoutCrew,
     clearLastScout,
+    clearOfflineReward,
   } = useGameState();
 
   // 광고 전용 이벤트 리스너
@@ -156,6 +158,13 @@ function App() {
         lastScoutedCrews={state.lastScoutedCrews}
         onClear={clearLastScout}
       />
+
+      {state.offlineReward && (
+        <OfflineRewardModal
+          reward={state.offlineReward}
+          onClose={clearOfflineReward}
+        />
+      )}
 
       {adConfig && (
         <AdModal

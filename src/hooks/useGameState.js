@@ -70,6 +70,9 @@ function gameReducer(state, action) {
             return checkAchievements(newState);
         }
 
+        case 'CLEAR_OFFLINE_REWARD':
+            return { ...state, offlineReward: null };
+
         case 'TICK': {
             const now = Date.now();
             const boostMultiplier = getActiveBoostMultiplier(state.boosts);
@@ -424,7 +427,29 @@ export function useGameState() {
     const [state, dispatch] = useReducer(gameReducer, initialGameState, (init) => {
         try {
             const saved = localStorage.getItem(SAVE_KEY);
-            return saved ? { ...init, ...JSON.parse(saved) } : init;
+            if (!saved) return init;
+            const savedState = JSON.parse(saved);
+            const loadedState = { ...init, ...savedState };
+
+            const lastSaveTime = savedState.lastSaveTime;
+            if (lastSaveTime && loadedState.perSecond > 0) {
+                const elapsedMs = Date.now() - lastSaveTime;
+                const cappedMs = Math.min(elapsedMs, 8 * 60 * 60 * 1000);
+                const elapsedSeconds = cappedMs / 1000;
+                if (elapsedSeconds > 60) {
+                    const autoMultiplier = loadedState.autoMultiplier || 1.0;
+                    const autoSynergy = loadedState.autoSynergy || 1.0;
+                    const equityMultiplier = 1 + (loadedState.equity || 0) * 0.02;
+                    const offlineEarnings = loadedState.perSecond * autoSynergy * autoMultiplier * equityMultiplier * elapsedSeconds;
+                    return {
+                        ...loadedState,
+                        codingPower: loadedState.codingPower + offlineEarnings,
+                        totalCodingPower: loadedState.totalCodingPower + offlineEarnings,
+                        offlineReward: { amount: offlineEarnings, seconds: elapsedSeconds },
+                    };
+                }
+            }
+            return loadedState;
         } catch { return init; }
     });
 
@@ -436,7 +461,7 @@ export function useGameState() {
     // 최적화: 2초마다 저장 (디스크 쓰기 부하 감소)
     useEffect(() => {
         const saveTimer = setInterval(() => {
-            localStorage.setItem(SAVE_KEY, JSON.stringify(state));
+            localStorage.setItem(SAVE_KEY, JSON.stringify({ ...state, lastSaveTime: Date.now() }));
         }, 2000);
         return () => clearInterval(saveTimer);
     }, [state]);
@@ -455,6 +480,7 @@ export function useGameState() {
         clearLastScout: () => dispatch({ type: 'CLEAR_LAST_SCOUT' }),
         rebirth: () => dispatch({ type: 'REBIRTH' }),
         clearNewAchievements: () => dispatch({ type: 'CLEAR_NEW_ACHIEVEMENTS' }),
+        clearOfflineReward: () => dispatch({ type: 'CLEAR_OFFLINE_REWARD' }),
         resetGame: () => {
             localStorage.removeItem(SAVE_KEY);
             dispatch({ type: 'RESET' });

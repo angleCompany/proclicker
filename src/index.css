@@ -1552,6 +1552,65 @@ body {
   to { opacity: 1; }
 }
 
+.offline-reward-modal {
+  background: var(--bg-card);
+  border: 1px solid var(--accent-blue);
+  border-radius: 16px;
+  padding: 32px 28px;
+  text-align: center;
+  max-width: 320px;
+  width: 90%;
+  animation: modal-pop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.offline-reward-icon {
+  font-size: 48px;
+  margin-bottom: 8px;
+}
+
+.offline-reward-modal h3 {
+  font-size: 1.3rem;
+  color: var(--accent-blue);
+  margin-bottom: 12px;
+}
+
+.offline-reward-desc {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  line-height: 1.6;
+  margin-bottom: 20px;
+}
+
+.offline-reward-amount {
+  font-size: 1.8rem;
+  font-weight: bold;
+  color: var(--accent-green);
+  text-shadow: 0 0 12px var(--accent-green);
+  margin-bottom: 24px;
+}
+
+.offline-reward-unit {
+  font-size: 1rem;
+  color: var(--text-secondary);
+}
+
+.offline-reward-btn {
+  background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+  border: none;
+  border-radius: 10px;
+  color: white;
+  font-size: 1.1rem;
+  font-weight: bold;
+  padding: 12px 40px;
+  cursor: pointer;
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+
+.offline-reward-btn:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 16px var(--accent-blue);
+}
+
 .ad-modal {
   background: var(--bg-card);
   border: 1px solid var(--border-glow);
