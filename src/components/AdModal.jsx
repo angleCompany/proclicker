@@ -43,16 +43,11 @@ export default function AdModal({ seconds, onComplete, onCancel }) {
                 
                 <div className="ad-modal-content">
                     {/* Kakao AdFit 배너 영역 */}
-                    <ins className="kakao_ad_area" 
-                         style={{ display: 'none' }}
-                         data-ad-unit="DAN-placeholder" 
-                         data-ad-width="320" 
+                    <ins className="kakao_ad_area"
+                         style={{ display: 'block' }}
+                         data-ad-unit="DAN-T18xef69SG84Vb4Q"
+                         data-ad-width="320"
                          data-ad-height="100"></ins>
-                    
-                    <div className="ad-modal-placeholder">
-                        <p>광고가 로딩 중이거나 표시되지 않을 수 있습니다.</p>
-                        <p className="smallText">(실제 AdUnit ID 설정 시 광고가 노출됩니다)</p>
-                    </div>
                 </div>
 
                 <div className="ad-modal-footer">
