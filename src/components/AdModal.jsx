@@ -17,14 +17,20 @@ export default function AdModal({ seconds, onComplete, onCancel }) {
     }, [timeLeft]);
 
     useEffect(() => {
-        // Kakao AdFit 렌더링 호출
-        if (window.adfit) {
-            try {
-                window.adfit.render();
-            } catch (e) {
-                console.error("Adfit render error:", e);
+        let attempts = 0;
+        const tryRender = () => {
+            if (window.adfit) {
+                try {
+                    window.adfit.render();
+                } catch (e) {
+                    console.error('Adfit render error:', e);
+                }
+            } else if (attempts < 15) {
+                attempts++;
+                setTimeout(tryRender, 300);
             }
-        }
+        };
+        setTimeout(tryRender, 100);
     }, []);
 
     const handleCollect = () => {
