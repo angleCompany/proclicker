@@ -1,5 +1,5 @@
 import { useReducer, useEffect } from 'react';
-import { initialGameState, getItemCost, getMilestoneMultiplier, achievementsList, calculateEquity, crewList, getGachaCost } from '../data/gameData';
+import { initialGameState, getItemCost, getMilestoneMultiplier, achievementsList, calculateEquity, crewList, getGachaCost, QUEST_POOL, getKSTDateString, pickDailyQuests } from '../data/gameData';
 
 const SAVE_KEY = 'coding_master_advanced_save_v4'; // 최적화 적용 버전
 
@@ -29,6 +29,28 @@ function checkAchievements(state) {
         newState.newAchievements = [...(newState.newAchievements || []), ...newAchievementsThisTurn];
     }
     return newState;
+}
+
+function updateQuestProgress(state) {
+    if (!state.dailyQuests || state.dailyQuests.quests.length === 0) return state;
+    const base = state.dailyQuests.questDeltaBase;
+    const deltas = {
+        clicks: state.stats.totalClicks - base.totalClicks,
+        itemsBought: state.stats.totalItemsBought - base.totalItemsBought,
+        gambleSuccess: state.stats.gambleSuccess - base.gambleSuccess,
+        hackathonWins: state.stats.hackathonWins - base.hackathonWins,
+        hackathonBugs: state.hackathon.bugsCaught,
+        powerEarned: state.totalCodingPower - base.powerEarned,
+    };
+    const updatedQuests = state.dailyQuests.quests.map(q => {
+        if (q.claimed) return q;
+        const def = QUEST_POOL.find(p => p.id === q.id);
+        if (!def) return q;
+        const current = deltas[def.type] ?? q.current;
+        const completed = current >= def.target;
+        return { ...q, current, completed };
+    });
+    return { ...state, dailyQuests: { ...state.dailyQuests, quests: updatedQuests } };
 }
 
 function gameReducer(state, action) {
@@ -67,7 +89,7 @@ function gameReducer(state, action) {
                 lastClickId: Date.now(), // 클릭 구분용 ID 추가
             };
 
-            return checkAchievements(newState);
+            return updateQuestProgress(checkAchievements(newState));
         }
 
         case 'CLEAR_OFFLINE_REWARD':
@@ -101,7 +123,7 @@ function gameReducer(state, action) {
                 }
             }
 
-            return checkAchievements(newState);
+            return updateQuestProgress(checkAchievements(newState));
         }
 
         case 'BUY_AUTO_ITEM': {
@@ -126,7 +148,7 @@ function gameReducer(state, action) {
                 perSecond: newPerSecond,
                 stats: { ...state.stats, totalItemsBought: state.stats.totalItemsBought + 1 },
             };
-            return checkAchievements(newState);
+            return updateQuestProgress(checkAchievements(newState));
         }
 
         case 'BUY_CLICK_ITEM': {
@@ -154,7 +176,7 @@ function gameReducer(state, action) {
                 perClick: basePerClick * legendMult,
                 stats: { ...state.stats, totalItemsBought: state.stats.totalItemsBought + 1 },
             };
-            return checkAchievements(newState);
+            return updateQuestProgress(checkAchievements(newState));
         }
 
         case 'BUY_SPECIAL_ITEM': {
@@ -181,7 +203,7 @@ function gameReducer(state, action) {
                         lastGambleResult: `도박 성공! +${Math.floor(reward)} 파워 획득! 🎰`,
                         stats: { ...state.stats, gambleSuccess: (state.stats.gambleSuccess || 0) + 1 }
                     };
-                    return checkAchievements(newState);
+                    return updateQuestProgress(checkAchievements(newState));
                 } else {
                     return {
                         ...state,
@@ -223,7 +245,7 @@ function gameReducer(state, action) {
                 newState.perClick = basePerClick * legendMult;
             }
 
-            return checkAchievements(newState);
+            return updateQuestProgress(checkAchievements(newState));
         }
 
         case 'TRIGGER_RANDOM_EVENT': {
@@ -281,7 +303,7 @@ function gameReducer(state, action) {
                     bugsCaught: state.hackathon.bugsCaught + 1
                 }
             };
-            return checkAchievements(newState);
+            return updateQuestProgress(checkAchievements(newState));
         }
 
         case 'SCOUT_CREW': {
@@ -393,7 +415,64 @@ function gameReducer(state, action) {
                 }
             });
 
+            rebirthState.dailyQuests = {
+                ...(state.dailyQuests || initialGameState.dailyQuests),
+                questDeltaBase: {
+                    totalClicks: 0,
+                    totalItemsBought: 0,
+                    gambleSuccess: rebirthState.stats.gambleSuccess,
+                    hackathonWins: rebirthState.stats.hackathonWins,
+                    hackathonBugs: 0,
+                    powerEarned: 0,
+                },
+            };
+
             return rebirthState;
+        }
+
+        case 'INIT_DAILY_QUESTS': {
+            const { todayKST, selected } = action.payload;
+            return {
+                ...state,
+                _questResetNeeded: false,
+                dailyQuests: {
+                    date: todayKST,
+                    quests: selected.map(def => ({ id: def.id, current: 0, completed: false, claimed: false })),
+                    questDeltaBase: {
+                        totalClicks: state.stats.totalClicks,
+                        totalItemsBought: state.stats.totalItemsBought,
+                        gambleSuccess: state.stats.gambleSuccess,
+                        hackathonWins: state.stats.hackathonWins,
+                        hackathonBugs: 0,
+                        powerEarned: state.totalCodingPower,
+                    },
+                },
+            };
+        }
+
+        case 'CLAIM_QUEST_REWARD': {
+            const { questId } = action.payload;
+            const quest = state.dailyQuests.quests.find(q => q.id === questId);
+            if (!quest || !quest.completed || quest.claimed) return state;
+            const def = QUEST_POOL.find(p => p.id === questId);
+            if (!def) return state;
+            let newState = { ...state };
+            if (def.reward.type === 'production_boost') {
+                const boost = state.perSecond * def.reward.minutes * 60;
+                newState.codingPower += boost;
+                newState.totalCodingPower += boost;
+            } else if (def.reward.type === 'click_mult_buff') {
+                newState.clickMultiplier = (newState.clickMultiplier || 1.0) + def.reward.value;
+            } else if (def.reward.type === 'auto_mult_buff') {
+                newState.autoMultiplier = (newState.autoMultiplier || 1.0) + def.reward.value;
+            }
+            newState.dailyQuests = {
+                ...state.dailyQuests,
+                quests: state.dailyQuests.quests.map(q =>
+                    q.id === questId ? { ...q, claimed: true } : q
+                ),
+            };
+            return checkAchievements(newState);
         }
 
         case 'CLEAR_NEW_ACHIEVEMENTS': {
@@ -429,7 +508,7 @@ export function useGameState() {
             const saved = localStorage.getItem(SAVE_KEY);
             if (!saved) return init;
             const savedState = JSON.parse(saved);
-            const loadedState = { ...init, ...savedState };
+            let loadedState = { ...init, ...savedState };
 
             const lastSaveTime = savedState.lastSaveTime;
             if (lastSaveTime && loadedState.perSecond > 0) {
@@ -441,13 +520,33 @@ export function useGameState() {
                     const autoSynergy = loadedState.autoSynergy || 1.0;
                     const equityMultiplier = 1 + (loadedState.equity || 0) * 0.02;
                     const offlineEarnings = loadedState.perSecond * autoSynergy * autoMultiplier * equityMultiplier * elapsedSeconds;
-                    return {
+                    loadedState = {
                         ...loadedState,
                         codingPower: loadedState.codingPower + offlineEarnings,
                         totalCodingPower: loadedState.totalCodingPower + offlineEarnings,
                         offlineReward: { amount: offlineEarnings, seconds: elapsedSeconds },
                     };
                 }
+            }
+            const todayKST = getKSTDateString();
+            const savedDate = loadedState.dailyQuests?.date ?? '';
+            if (savedDate !== todayKST) {
+                const selected = pickDailyQuests();
+                loadedState = {
+                    ...loadedState,
+                    dailyQuests: {
+                        date: todayKST,
+                        quests: selected.map(def => ({ id: def.id, current: 0, completed: false, claimed: false })),
+                        questDeltaBase: {
+                            totalClicks: loadedState.stats.totalClicks,
+                            totalItemsBought: loadedState.stats.totalItemsBought,
+                            gambleSuccess: loadedState.stats.gambleSuccess,
+                            hackathonWins: loadedState.stats.hackathonWins,
+                            hackathonBugs: 0,
+                            powerEarned: loadedState.totalCodingPower,
+                        },
+                    },
+                };
             }
             return loadedState;
         } catch { return init; }
@@ -466,6 +565,14 @@ export function useGameState() {
         return () => clearInterval(saveTimer);
     }, [state]);
 
+    useEffect(() => {
+        if (state._questResetNeeded) {
+            const todayKST = getKSTDateString();
+            const selected = pickDailyQuests();
+            dispatch({ type: 'INIT_DAILY_QUESTS', payload: { todayKST, selected } });
+        }
+    }, [state._questResetNeeded]);
+
     return {
         state,
         click: () => dispatch({ type: 'CLICK' }),
@@ -481,6 +588,7 @@ export function useGameState() {
         rebirth: () => dispatch({ type: 'REBIRTH' }),
         clearNewAchievements: () => dispatch({ type: 'CLEAR_NEW_ACHIEVEMENTS' }),
         clearOfflineReward: () => dispatch({ type: 'CLEAR_OFFLINE_REWARD' }),
+        claimQuestReward: (questId) => dispatch({ type: 'CLAIM_QUEST_REWARD', payload: { questId } }),
         resetGame: () => {
             localStorage.removeItem(SAVE_KEY);
             dispatch({ type: 'RESET' });

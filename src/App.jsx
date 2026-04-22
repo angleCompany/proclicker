@@ -13,6 +13,7 @@ import CrewModal from './components/CrewModal';
 import GachaReveal from './components/GachaReveal';
 import AdModal from './components/AdModal';
 import OfflineRewardModal from './components/OfflineRewardModal';
+import DailyQuestModal from './components/DailyQuestModal';
 import { useSound } from './hooks/useSound';
 import { adService } from './services/adService';
 import './index.css';
@@ -22,6 +23,7 @@ function App() {
   const [showRebirth, setShowRebirth] = useState(false);
   const [showCrew, setShowCrew] = useState(false);
   const [adConfig, setAdConfig] = useState(null);
+  const [showDailyQuests, setShowDailyQuests] = useState(false);
   const { isMuted, toggleMute, playClick, playBuySound } = useSound();
 
   const {
@@ -37,6 +39,7 @@ function App() {
     scoutCrew,
     clearLastScout,
     clearOfflineReward,
+    claimQuestReward,
   } = useGameState();
 
   // 광고 전용 이벤트 리스너
@@ -109,6 +112,8 @@ function App() {
         onOpenAchievements={() => setShowAchievements(true)}
         onOpenRebirth={() => setShowRebirth(true)}
         onOpenCrew={() => setShowCrew(true)}
+        onOpenDailyQuests={() => setShowDailyQuests(true)}
+        dailyQuestsHasUnclaimed={state.dailyQuests?.quests?.some(q => q.completed && !q.claimed) ?? false}
       />
 
       <div className="app__body">
@@ -134,6 +139,15 @@ function App() {
       <Hackathon onPlaySound={playBuySound} />
       <AchievementPopup />
       {showAchievements && <AchievementModal onClose={() => setShowAchievements(false)} />}
+
+      {showDailyQuests && (
+        <DailyQuestModal
+          state={state}
+          onClose={() => setShowDailyQuests(false)}
+          onClaimReward={(questId) => { claimQuestReward(questId); }}
+          onPlaySound={playBuySound}
+        />
+      )}
 
       {showRebirth && (
         <RebirthModal

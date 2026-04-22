@@ -204,6 +204,44 @@ export const achievementsList = [
     }
 ];
 
+export const QUEST_POOL = [
+  { id: 'q_clicks_50', title: '손가락 운동', description: '오늘 코드를 50번 클릭하세요', type: 'clicks', target: 50, reward: { type: 'production_boost', minutes: 30 }, rewardDesc: '30분치 초당 생산량 즉시 획득', icon: '🖱️' },
+  { id: 'q_clicks_200', title: '클릭 장인', description: '오늘 코드를 200번 클릭하세요', type: 'clicks', target: 200, reward: { type: 'production_boost', minutes: 30 }, rewardDesc: '30분치 초당 생산량 즉시 획득', icon: '⚡' },
+  { id: 'q_items_5', title: '장비 구매', description: '오늘 아이템을 5개 구매하세요', type: 'itemsBought', target: 5, reward: { type: 'production_boost', minutes: 30 }, rewardDesc: '30분치 초당 생산량 즉시 획득', icon: '🛍️' },
+  { id: 'q_items_20', title: '쇼핑 중독', description: '오늘 아이템을 20개 구매하세요', type: 'itemsBought', target: 20, reward: { type: 'click_mult_buff', value: 0.05 }, rewardDesc: '영구 클릭 효율 +5%', icon: '🛒' },
+  { id: 'q_gamble_3', title: '오늘의 운', description: '야근 디버깅(도박)을 3번 성공하세요', type: 'gambleSuccess', target: 3, reward: { type: 'production_boost', minutes: 30 }, rewardDesc: '30분치 초당 생산량 즉시 획득', icon: '🎲' },
+  { id: 'q_gamble_10', title: '타짜의 하루', description: '야근 디버깅(도박)을 10번 성공하세요', type: 'gambleSuccess', target: 10, reward: { type: 'auto_mult_buff', value: 0.05 }, rewardDesc: '영구 자동 생산 효율 +5%', icon: '🃏' },
+  { id: 'q_hackathon_bugs', title: '해커톤 참가', description: '해커톤에서 버그를 1마리 이상 잡으세요', type: 'hackathonBugs', target: 1, reward: { type: 'production_boost', minutes: 30 }, rewardDesc: '30분치 초당 생산량 즉시 획득', icon: '🐛' },
+  { id: 'q_hackathon_win', title: '해커톤 챔피언', description: '해커톤에서 20마리 이상 잡아 우승하세요', type: 'hackathonWins', target: 1, reward: { type: 'click_mult_buff', value: 0.05 }, rewardDesc: '영구 클릭 효율 +5%', icon: '🏆' },
+  { id: 'q_power_earn', title: '열심히 코딩', description: '오늘 코딩력을 10,000 이상 획득하세요', type: 'powerEarned', target: 10000, reward: { type: 'production_boost', minutes: 30 }, rewardDesc: '30분치 초당 생산량 즉시 획득', icon: '💪' },
+  { id: 'q_power_earn_big', title: '코딩 마라톤', description: '오늘 코딩력을 1,000,000 이상 획득하세요', type: 'powerEarned', target: 1000000, reward: { type: 'auto_mult_buff', value: 0.05 }, rewardDesc: '영구 자동 생산 효율 +5%', icon: '🚀' },
+];
+
+export function getKSTDateString() {
+  const now = new Date(Date.now() + 9 * 60 * 60 * 1000);
+  return now.toISOString().slice(0, 10);
+}
+
+function seededRandom(seed) {
+  let s = seed;
+  return function () {
+    s = (s * 1664525 + 1013904223) & 0xffffffff;
+    return (s >>> 0) / 0xffffffff;
+  };
+}
+
+export function pickDailyQuests() {
+  const todayStr = getKSTDateString();
+  const daySeed = parseInt(todayStr.replace(/-/g, ''), 10);
+  const rng = seededRandom(daySeed);
+  const pool = [...QUEST_POOL];
+  for (let i = pool.length - 1; i > 0; i--) {
+    const j = Math.floor(rng() * (i + 1));
+    [pool[i], pool[j]] = [pool[j], pool[i]];
+  }
+  return pool.slice(0, 3);
+}
+
 // 획득 가능한 스타트업 지분(Equity) 계산 (예: 10억 코딩력 당 1 지분 기준, 기하급수적으로 이폭이 커짐)
 export function calculateEquity(totalCodingPower) {
     if (totalCodingPower < 1e9) return 0; // 10억 미만은 지분 없음
@@ -266,4 +304,16 @@ export const initialGameState = {
     rebirthCount: 0,     // 환생 횟수
     // 가챠 시스템 전용 필드
     inventory: [],       // 영입한 크루 목록 [{ id, level }]
+    dailyQuests: {
+        date: '',
+        quests: [],
+        questDeltaBase: {
+            totalClicks: 0,
+            totalItemsBought: 0,
+            gambleSuccess: 0,
+            hackathonWins: 0,
+            hackathonBugs: 0,
+            powerEarned: 0,
+        },
+    },
 };

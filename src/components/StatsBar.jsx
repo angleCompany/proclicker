@@ -1,7 +1,7 @@
 import { formatNumber } from '../data/gameData';
 import ShareButton from './ShareButton';
 
-export default function StatsBar({ state, onReset, isMuted, onToggleMute, onOpenAchievements, onOpenRebirth, onOpenCrew }) {
+export default function StatsBar({ state, onReset, isMuted, onToggleMute, onOpenAchievements, onOpenRebirth, onOpenCrew, onOpenDailyQuests, dailyQuestsHasUnclaimed }) {
     const boostMultiplier = getActiveBoostMultiplier(state.boosts);
     const showRebirthBtn = state.totalCodingPower >= 1000000000 || state.rebirthCount > 0;
 
@@ -29,6 +29,17 @@ export default function StatsBar({ state, onReset, isMuted, onToggleMute, onOpen
                     )}
                     <button className="stats-bar__crew" onClick={onOpenCrew} style={{ background: '#2a2a40', color: '#fff', border: '1px solid #4da6ff' }}>
                         <span>📇</span> <span className="btn-text">스카웃</span>
+                    </button>
+                    <button className="stats-bar__daily-quests" onClick={onOpenDailyQuests} style={{ background: '#2a2a40', color: '#fff', border: '1px solid #4da6ff', position: 'relative' }}>
+                        <span>📋</span> <span className="btn-text">일일퀘스트</span>
+                        {dailyQuestsHasUnclaimed && (
+                            <span style={{
+                                position: 'absolute', top: '-3px', right: '-3px',
+                                width: '8px', height: '8px',
+                                background: '#ff4444', borderRadius: '50%',
+                                display: 'block'
+                            }} />
+                        )}
                     </button>
                     <button className="stats-bar__achievements" onClick={onOpenAchievements}>
                         <span>🏆</span> <span className="btn-text">업적</span>
