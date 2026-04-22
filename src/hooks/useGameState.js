@@ -46,7 +46,7 @@ function updateQuestProgress(state) {
         if (q.claimed) return q;
         const def = QUEST_POOL.find(p => p.id === q.id);
         if (!def) return q;
-        const current = deltas[def.type] ?? q.current;
+        const current = Math.max(0, deltas[def.type] ?? q.current);
         const completed = current >= def.target;
         return { ...q, current, completed };
     });

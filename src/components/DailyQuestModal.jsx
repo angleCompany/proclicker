@@ -52,7 +52,7 @@ export default function DailyQuestModal({ state, onClose, onClaimReward, onPlayS
         const def = QUEST_POOL.find(p => p.id === q.id);
         if (!def) return null;
 
-        const progressPct = Math.min(100, (q.current / def.target) * 100);
+        const progressPct = Math.max(0, Math.min(100, ((q.current || 0) / (def.target || 1)) * 100)) || 0;
         const cardStyle = getCardStyle(q);
 
         let statusBadge;
