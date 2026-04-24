@@ -7,9 +7,9 @@ export default function NextAchievements({ state }) {
 
     const withProgress = unachieved.map(a => {
         const { current, target } = a.progressFn(state);
-        const pct = Math.min(99.9, (current / target) * 100);
+        const pct = Math.min(100, (current / target) * 100);
         return { ...a, current, target, pct };
-    }).filter(a => a.pct > 0).sort((a, b) => b.pct - a.pct).slice(0, 3);
+    }).filter(a => a.current < a.target && a.pct > 0).sort((a, b) => b.pct - a.pct).slice(0, 3);
 
     if (withProgress.length === 0) return null;
 
