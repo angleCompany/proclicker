@@ -15,6 +15,7 @@ import AdModal from './components/AdModal';
 import OfflineRewardModal from './components/OfflineRewardModal';
 import DailyQuestModal from './components/DailyQuestModal';
 import WeeklyChallengeModal from './components/WeeklyChallengeModal';
+import ResetConfirmModal from './components/ResetConfirmModal';
 import { useSound } from './hooks/useSound';
 import { adService } from './services/adService';
 import './index.css';
@@ -26,6 +27,7 @@ function App() {
   const [adConfig, setAdConfig] = useState(null);
   const [showDailyQuests, setShowDailyQuests] = useState(false);
   const [showWeeklyChallenge, setShowWeeklyChallenge] = useState(false);
+  const [showResetConfirm, setShowResetConfirm] = useState(false);
   const { isMuted, toggleMute, playClick, playBuySound } = useSound();
 
   const {
@@ -93,11 +95,7 @@ function App() {
 
   if (!state) return null;
 
-  const handleReset = () => {
-    if (window.confirm('정말로 게임을 초기화하시겠습니까?\n모든 진행 상황이 삭제됩니다.')) {
-      resetGame();
-    }
-  };
+  const handleReset = () => setShowResetConfirm(true);
 
   return (
     <div className="app">
@@ -197,6 +195,13 @@ function App() {
             if (ok) applyOfflineAdBonus();
             clearOfflineReward();
           }}
+        />
+      )}
+
+      {showResetConfirm && (
+        <ResetConfirmModal
+          onConfirm={() => { resetGame(); setShowResetConfirm(false); }}
+          onClose={() => setShowResetConfirm(false)}
         />
       )}
 
