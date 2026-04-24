@@ -1,5 +1,5 @@
 import { useReducer, useEffect } from 'react';
-import { initialGameState, getItemCost, getMilestoneMultiplier, achievementsList, calculateEquity, crewList, getGachaCost, QUEST_POOL, getKSTDateString, pickDailyQuests } from '../data/gameData';
+import { initialGameState, getItemCost, getMilestoneMultiplier, achievementsList, calculateEquity, crewList, getGachaCost, QUEST_POOL, getKSTDateString, pickDailyQuests, WEEKLY_CHALLENGE_POOL, getKSTWeekString, pickWeeklyChallenge } from '../data/gameData';
 
 const SAVE_KEY = 'coding_master_advanced_save_v4'; // 최적화 적용 버전
 
@@ -62,6 +62,27 @@ function updateQuestProgress(state) {
     return { ...state, dailyQuests: { ...state.dailyQuests, quests: updatedQuests } };
 }
 
+function updateWeeklyProgress(state) {
+    if (!state.weeklyChallenge?.challenge || state.weeklyChallenge.claimed) return state;
+    const def = state.weeklyChallenge.challenge;
+    const base = state.weeklyChallenge.challengeDeltaBase;
+    let current;
+    if (def.type === 'clicks') current = state.stats.totalClicks - base.totalClicks;
+    else if (def.type === 'itemsBought') current = state.stats.totalItemsBought - base.totalItemsBought;
+    else if (def.type === 'gambleSuccess') current = (state.stats.gambleSuccess || 0) - base.gambleSuccess;
+    else if (def.type === 'hackathonWins') current = (state.stats.hackathonWins || 0) - base.hackathonWins;
+    else if (def.type === 'maxCombo') current = Math.max(state.maxCombo || 0, state.weeklyChallenge.current);
+    else if (def.type === 'powerEarned') current = state.totalCodingPower - base.powerEarned;
+    else current = state.weeklyChallenge.current;
+    current = Math.max(0, current);
+    const completed = current >= def.target;
+    if (current === state.weeklyChallenge.current && completed === state.weeklyChallenge.completed) return state;
+    return {
+        ...state,
+        weeklyChallenge: { ...state.weeklyChallenge, current, completed }
+    };
+}
+
 function gameReducer(state, action) {
     switch (action.type) {
         case 'CLICK': {
@@ -113,8 +134,22 @@ function gameReducer(state, action) {
         case 'CLEAR_OFFLINE_REWARD':
             return { ...state, offlineReward: null };
 
+        case 'APPLY_OFFLINE_AD_BONUS': {
+            if (!state.offlineReward) return state;
+            const bonus = state.offlineReward.amount * 0.5;
+            return {
+                ...state,
+                codingPower: state.codingPower + bonus,
+                totalCodingPower: state.totalCodingPower + bonus,
+            };
+        }
+
         case 'TICK': {
             const todayKST = getKSTDateString();
+            const thisWeek = getKSTWeekString();
+            if (state.weeklyChallenge?.weekStr && state.weeklyChallenge.weekStr !== thisWeek) {
+                return { ...state, _weeklyResetNeeded: true };
+            }
             if (state.dailyQuests?.date && state.dailyQuests.date !== todayKST) {
                 return { ...state, _questResetNeeded: true };
             }
@@ -147,7 +182,7 @@ function gameReducer(state, action) {
                     : newState.stats,
             } : newState;
 
-            return updateQuestProgress(checkAchievements(finalState, 'TICK'));
+            return updateWeeklyProgress(updateQuestProgress(checkAchievements(finalState, 'TICK')));
         }
 
         case 'BUY_AUTO_ITEM': {
@@ -504,6 +539,48 @@ function gameReducer(state, action) {
             return checkAchievements(newState, 'ALL');
         }
 
+        case 'INIT_WEEKLY_CHALLENGE': {
+            const { weekStr, challenge } = action.payload;
+            return {
+                ...state,
+                _weeklyResetNeeded: false,
+                weeklyChallenge: {
+                    weekStr,
+                    challenge,
+                    current: 0,
+                    completed: false,
+                    claimed: false,
+                    challengeDeltaBase: {
+                        totalClicks: state.stats.totalClicks,
+                        totalItemsBought: state.stats.totalItemsBought,
+                        gambleSuccess: state.stats.gambleSuccess || 0,
+                        hackathonWins: state.stats.hackathonWins || 0,
+                        maxCombo: state.maxCombo || 0,
+                        powerEarned: state.totalCodingPower,
+                    },
+                },
+            };
+        }
+
+        case 'CLAIM_WEEKLY_REWARD': {
+            if (!state.weeklyChallenge?.completed || state.weeklyChallenge.claimed) return state;
+            const def = state.weeklyChallenge.challenge;
+            if (!def) return state;
+            let newState = { ...state };
+            if (def.reward.type === 'production_boost') {
+                const baseBoost = state.perSecond * def.reward.minutes * 60;
+                const boost = baseBoost > 0 ? baseBoost : state.perClick * 200;
+                newState.codingPower += boost;
+                newState.totalCodingPower += boost;
+            } else if (def.reward.type === 'click_mult_buff') {
+                newState.clickMultiplier = (newState.clickMultiplier || 1.0) + def.reward.value;
+            } else if (def.reward.type === 'auto_mult_buff') {
+                newState.autoMultiplier = (newState.autoMultiplier || 1.0) + def.reward.value;
+            }
+            newState.weeklyChallenge = { ...state.weeklyChallenge, claimed: true };
+            return newState;
+        }
+
         case 'CLEAR_NEW_ACHIEVEMENTS': {
             return {
                 ...state,
@@ -577,6 +654,29 @@ export function useGameState() {
                     },
                 };
             }
+            const thisWeek = getKSTWeekString();
+            const savedWeek = loadedState.weeklyChallenge?.weekStr ?? '';
+            if (savedWeek !== thisWeek) {
+                const challenge = pickWeeklyChallenge();
+                loadedState = {
+                    ...loadedState,
+                    weeklyChallenge: {
+                        weekStr: thisWeek,
+                        challenge,
+                        current: 0,
+                        completed: false,
+                        claimed: false,
+                        challengeDeltaBase: {
+                            totalClicks: loadedState.stats.totalClicks,
+                            totalItemsBought: loadedState.stats.totalItemsBought,
+                            gambleSuccess: loadedState.stats.gambleSuccess || 0,
+                            hackathonWins: loadedState.stats.hackathonWins || 0,
+                            maxCombo: loadedState.maxCombo || 0,
+                            powerEarned: loadedState.totalCodingPower,
+                        },
+                    },
+                };
+            }
             return loadedState;
         } catch { return init; }
     });
@@ -602,6 +702,14 @@ export function useGameState() {
         }
     }, [state._questResetNeeded]);
 
+    useEffect(() => {
+        if (state._weeklyResetNeeded) {
+            const weekStr = getKSTWeekString();
+            const challenge = pickWeeklyChallenge();
+            dispatch({ type: 'INIT_WEEKLY_CHALLENGE', payload: { weekStr, challenge } });
+        }
+    }, [state._weeklyResetNeeded]);
+
     return {
         state,
         click: () => dispatch({ type: 'CLICK' }),
@@ -617,7 +725,9 @@ export function useGameState() {
         rebirth: () => dispatch({ type: 'REBIRTH' }),
         clearNewAchievements: () => dispatch({ type: 'CLEAR_NEW_ACHIEVEMENTS' }),
         clearOfflineReward: () => dispatch({ type: 'CLEAR_OFFLINE_REWARD' }),
+        applyOfflineAdBonus: () => dispatch({ type: 'APPLY_OFFLINE_AD_BONUS' }),
         claimQuestReward: (questId) => dispatch({ type: 'CLAIM_QUEST_REWARD', payload: { questId } }),
+        claimWeeklyReward: () => dispatch({ type: 'CLAIM_WEEKLY_REWARD' }),
         resetGame: () => {
             localStorage.removeItem(SAVE_KEY);
             dispatch({ type: 'RESET' });

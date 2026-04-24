@@ -144,64 +144,269 @@ export const specialItems = [
 
 // 업적 시스템 데이터 (새로 추가)
 export const achievementsList = [
-    {
-        id: 'click_100',
-        name: '마우스 브레이커 (입문)',
-        description: '총 클릭 수 100회 달성',
-        icon: '🖱️',
-        condition: (state) => state.stats.totalClicks >= 100,
-        rewardDesc: '영구 클릭 효율 +10%',
-        applyReward: (state) => ({ ...state, clickMultiplier: (state.clickMultiplier || 1) + 0.1 })
-    },
-    {
-        id: 'click_1000',
-        name: '손목 터널 증후군',
-        description: '총 클릭 수 1,000회 달성',
-        icon: '🚑',
-        condition: (state) => state.stats.totalClicks >= 1000,
-        rewardDesc: '영구 클릭 효율 +25%',
-        applyReward: (state) => ({ ...state, clickMultiplier: (state.clickMultiplier || 1) + 0.25 })
-    },
-    {
-        id: 'power_1m',
-        name: '백만장자 개발자',
-        description: '누적 코딩 파워 1,000,000 달성',
-        icon: '💰',
-        condition: (state) => state.totalCodingPower >= 1000000,
-        rewardDesc: '자동 생산 효율 +15%',
-        applyReward: (state) => ({ ...state, autoMultiplier: (state.autoMultiplier || 1) + 0.15 })
-    },
-    {
-        id: 'item_50',
-        name: '장비충',
-        description: '아이템 총 50개 구매',
-        icon: '🛍️',
-        condition: (state) => state.stats.totalItemsBought >= 50,
-        rewardDesc: '모든 아이템 가격 5% 할인',
-        applyReward: (state) => ({ ...state, globalDiscount: Math.min(state.globalDiscount + 0.05, 0.5) })
-    },
-    {
-        id: 'gamble_10',
-        name: '타짜',
-        description: '도박(야근 디버깅) 10회 성공',
-        icon: '🃏',
-        condition: (state) => (state.stats.gambleSuccess || 0) >= 10,
-        rewardDesc: '크리티컬 확률 +5%',
-        applyReward: (state) => ({ ...state, critProb: Math.min(state.critProb + 0.05, 0.8) })
-    },
-    {
-        id: 'hackathon_winner',
-        name: '해커톤 우승자',
-        description: '해커톤에서 버그 20마리 이상 포획',
-        icon: '🏆',
-        condition: (state) => (state.stats.hackathonWins || 0) >= 1,
-        rewardDesc: '영구 클릭 효율 +5%, 영구 자동 생산 +5%',
-        applyReward: (state) => ({
-            ...state,
-            clickMultiplier: (state.clickMultiplier || 1) + 0.05,
-            autoMultiplier: (state.autoMultiplier || 1) + 0.05
-        })
-    }
+  // ── CLICK (5) ──
+  {
+    id: 'click_master', name: '클릭 마스터', icon: '🖱️', category: 'click', triggerOn: ['CLICK'],
+    description: '코드를 100번 클릭하세요',
+    condition: s => s.stats.totalClicks >= 100,
+    progressFn: s => ({ current: s.stats.totalClicks, target: 100 }),
+    rewardDesc: '클릭 효율 +5%',
+    applyReward: s => ({ ...s, clickMultiplier: (s.clickMultiplier || 1) + 0.05 })
+  },
+  {
+    id: 'click_addict', name: '클릭 중독자', icon: '⌨️', category: 'click', triggerOn: ['CLICK'],
+    description: '코드를 1,000번 클릭하세요',
+    condition: s => s.stats.totalClicks >= 1000,
+    progressFn: s => ({ current: s.stats.totalClicks, target: 1000 }),
+    rewardDesc: '클릭 효율 +10%',
+    applyReward: s => ({ ...s, clickMultiplier: (s.clickMultiplier || 1) + 0.10 })
+  },
+  {
+    id: 'click_pro', name: '프로 클리커', icon: '⚡', category: 'click', triggerOn: ['CLICK'],
+    description: '코드를 10,000번 클릭하세요',
+    condition: s => s.stats.totalClicks >= 10000,
+    progressFn: s => ({ current: s.stats.totalClicks, target: 10000 }),
+    rewardDesc: '크리티컬 확률 +5%',
+    applyReward: s => ({ ...s, critProb: Math.min((s.critProb || 0.05) + 0.05, 0.8) })
+  },
+  {
+    id: 'click_legend', name: '클릭의 전설', icon: '🌟', category: 'click', triggerOn: ['CLICK'],
+    description: '코드를 100,000번 클릭하세요',
+    condition: s => s.stats.totalClicks >= 100000,
+    progressFn: s => ({ current: s.stats.totalClicks, target: 100000 }),
+    rewardDesc: '크리티컬 데미지 +50%',
+    applyReward: s => ({ ...s, critMult: (s.critMult || 2) + 0.5 })
+  },
+  {
+    id: 'click_god', name: '클릭의 신', icon: '🌌', category: 'click', triggerOn: ['CLICK'],
+    description: '코드를 1,000,000번 클릭하세요',
+    condition: s => s.stats.totalClicks >= 1000000,
+    progressFn: s => ({ current: s.stats.totalClicks, target: 1000000 }),
+    rewardDesc: '클릭 효율 +50%',
+    applyReward: s => ({ ...s, clickMultiplier: (s.clickMultiplier || 1) + 0.5 })
+  },
+
+  // ── POWER (6) ──
+  {
+    id: 'millionaire', name: '백만장자', icon: '💰', category: 'power', triggerOn: ['CLICK', 'TICK'],
+    description: '누적 코딩력 100만 달성',
+    condition: s => s.totalCodingPower >= 1e6,
+    progressFn: s => ({ current: s.totalCodingPower, target: 1000000 }),
+    rewardDesc: '자동 효율 +10%',
+    applyReward: s => ({ ...s, autoMultiplier: (s.autoMultiplier || 1) + 0.10 })
+  },
+  {
+    id: 'billionaire', name: '억만장자', icon: '💎', category: 'power', triggerOn: ['CLICK', 'TICK'],
+    description: '누적 코딩력 10억 달성',
+    condition: s => s.totalCodingPower >= 1e9,
+    progressFn: s => ({ current: s.totalCodingPower, target: 1000000000 }),
+    rewardDesc: '자동 효율 +20%',
+    applyReward: s => ({ ...s, autoMultiplier: (s.autoMultiplier || 1) + 0.2 })
+  },
+  {
+    id: 'trillionaire', name: '조만장자', icon: '🚀', category: 'power', triggerOn: ['CLICK', 'TICK'],
+    description: '누적 코딩력 1조 달성',
+    condition: s => s.totalCodingPower >= 1e12,
+    progressFn: s => ({ current: s.totalCodingPower, target: 1000000000000 }),
+    rewardDesc: '자동 효율 +30%',
+    applyReward: s => ({ ...s, autoMultiplier: (s.autoMultiplier || 1) + 0.3 })
+  },
+  {
+    id: 'quadrillionaire', name: '경만장자', icon: '👑', category: 'power', triggerOn: ['CLICK', 'TICK'],
+    description: '누적 코딩력 1경 달성',
+    condition: s => s.totalCodingPower >= 1e15,
+    progressFn: s => ({ current: s.totalCodingPower, target: 1e15 }),
+    rewardDesc: '크리티컬 확률 +5%',
+    applyReward: s => ({ ...s, critProb: Math.min((s.critProb || 0.05) + 0.05, 0.8) })
+  },
+  {
+    id: 'quintillionaire', name: '해 단위 코더', icon: '✨', category: 'power', triggerOn: ['CLICK', 'TICK'],
+    description: '누적 코딩력 1해 달성',
+    condition: s => s.totalCodingPower >= 1e18,
+    progressFn: s => ({ current: s.totalCodingPower, target: 1e18 }),
+    rewardDesc: '클릭 효율 +50%',
+    applyReward: s => ({ ...s, clickMultiplier: (s.clickMultiplier || 1) + 0.5 })
+  },
+  {
+    id: 'power_right_now', name: '지금 이 순간', icon: '💡', category: 'power', triggerOn: ['CLICK', 'TICK'],
+    description: '현재 코딩력 10억 보유',
+    condition: s => s.codingPower >= 1e9,
+    progressFn: s => ({ current: s.codingPower, target: 1e9 }),
+    rewardDesc: '자동 효율 +15%',
+    applyReward: s => ({ ...s, autoMultiplier: (s.autoMultiplier || 1) + 0.15 })
+  },
+
+  // ── SHOP (4) ──
+  {
+    id: 'shopaholic', name: '쇼핑홀릭', icon: '🛒', category: 'shop', triggerOn: ['BUY'],
+    description: '아이템을 50개 구매하세요',
+    condition: s => s.stats.totalItemsBought >= 50,
+    progressFn: s => ({ current: s.stats.totalItemsBought, target: 50 }),
+    rewardDesc: '자동 효율 +15%',
+    applyReward: s => ({ ...s, autoMultiplier: (s.autoMultiplier || 1) + 0.15 })
+  },
+  {
+    id: 'shop_addict', name: '쇼핑 중독', icon: '📦', category: 'shop', triggerOn: ['BUY'],
+    description: '아이템을 총 100개 구매하세요',
+    condition: s => s.stats.totalItemsBought >= 100,
+    progressFn: s => ({ current: s.stats.totalItemsBought, target: 100 }),
+    rewardDesc: '가격 할인 +3%',
+    applyReward: s => ({ ...s, globalDiscount: Math.min((s.globalDiscount || 0) + 0.03, 0.5) })
+  },
+  {
+    id: 'shop_king', name: '쇼핑의 왕', icon: '🏪', category: 'shop', triggerOn: ['BUY'],
+    description: '아이템을 총 200개 구매하세요',
+    condition: s => s.stats.totalItemsBought >= 200,
+    progressFn: s => ({ current: s.stats.totalItemsBought, target: 200 }),
+    rewardDesc: '가격 할인 +3%',
+    applyReward: s => ({ ...s, globalDiscount: Math.min((s.globalDiscount || 0) + 0.03, 0.5) })
+  },
+  {
+    id: 'shop_god', name: '소비의 신', icon: '💸', category: 'shop', triggerOn: ['BUY'],
+    description: '아이템을 총 500개 구매하세요',
+    condition: s => s.stats.totalItemsBought >= 500,
+    progressFn: s => ({ current: s.stats.totalItemsBought, target: 500 }),
+    rewardDesc: '자동 시너지 +10%',
+    applyReward: s => ({ ...s, autoSynergy: (s.autoSynergy || 1) + 0.1 })
+  },
+
+  // ── GAMBLE (4) ──
+  {
+    id: 'gambler', name: '타짜', icon: '🎲', category: 'gamble', triggerOn: ['BUY'],
+    description: '도박에서 10번 승리하세요',
+    condition: s => s.stats.gambleSuccess >= 10,
+    progressFn: s => ({ current: s.stats.gambleSuccess || 0, target: 10 }),
+    rewardDesc: '클릭 효율 +10%',
+    applyReward: s => ({ ...s, clickMultiplier: (s.clickMultiplier || 1) + 0.10 })
+  },
+  {
+    id: 'gambler_pro', name: '타짜 프로', icon: '🃏', category: 'gamble', triggerOn: ['BUY'],
+    description: '도박에서 50번 승리하세요',
+    condition: s => s.stats.gambleSuccess >= 50,
+    progressFn: s => ({ current: s.stats.gambleSuccess || 0, target: 50 }),
+    rewardDesc: '크리티컬 확률 +5%',
+    applyReward: s => ({ ...s, critProb: Math.min((s.critProb || 0.05) + 0.05, 0.8) })
+  },
+  {
+    id: 'gambler_legend', name: '타짜 전설', icon: '🎰', category: 'gamble', triggerOn: ['BUY'],
+    description: '도박에서 100번 승리하세요',
+    condition: s => s.stats.gambleSuccess >= 100,
+    progressFn: s => ({ current: s.stats.gambleSuccess || 0, target: 100 }),
+    rewardDesc: '크리티컬 데미지 +100%',
+    applyReward: s => ({ ...s, critMult: (s.critMult || 2) + 1.0 })
+  },
+  {
+    id: 'gambler_god', name: '운의 신', icon: '🌠', category: 'gamble', triggerOn: ['BUY'],
+    description: '도박에서 200번 승리하세요',
+    condition: s => s.stats.gambleSuccess >= 200,
+    progressFn: s => ({ current: s.stats.gambleSuccess || 0, target: 200 }),
+    rewardDesc: '자동 효율 +30%',
+    applyReward: s => ({ ...s, autoMultiplier: (s.autoMultiplier || 1) + 0.3 })
+  },
+
+  // ── HACKATHON (4) ──
+  {
+    id: 'hackathon_winner', name: '해커톤 우승자', icon: '🏆', category: 'hackathon', triggerOn: ['TICK'],
+    description: '해커톤에서 버그 20마리 이상 포획',
+    condition: s => (s.stats.hackathonWins || 0) >= 1,
+    progressFn: s => ({ current: s.stats.hackathonWins || 0, target: 1 }),
+    rewardDesc: '클릭 +5%, 자동 +5%',
+    applyReward: s => ({ ...s, clickMultiplier: (s.clickMultiplier || 1) + 0.05, autoMultiplier: (s.autoMultiplier || 1) + 0.05 })
+  },
+  {
+    id: 'hackathon_pro', name: '해커톤 프로', icon: '🥇', category: 'hackathon', triggerOn: ['TICK'],
+    description: '해커톤에서 5번 우승하세요',
+    condition: s => (s.stats.hackathonWins || 0) >= 5,
+    progressFn: s => ({ current: s.stats.hackathonWins || 0, target: 5 }),
+    rewardDesc: '자동 효율 +20%',
+    applyReward: s => ({ ...s, autoMultiplier: (s.autoMultiplier || 1) + 0.2 })
+  },
+  {
+    id: 'hackathon_legend', name: '해커톤 전설', icon: '👾', category: 'hackathon', triggerOn: ['TICK'],
+    description: '해커톤에서 20번 우승하세요',
+    condition: s => (s.stats.hackathonWins || 0) >= 20,
+    progressFn: s => ({ current: s.stats.hackathonWins || 0, target: 20 }),
+    rewardDesc: '크리티컬 데미지 +100%',
+    applyReward: s => ({ ...s, critMult: (s.critMult || 2) + 1.0 })
+  },
+  {
+    id: 'bug_hunter', name: '버그 헌터', icon: '🐛', category: 'hackathon', triggerOn: ['HACKATHON'],
+    description: '해커톤에서 버그를 누적 100마리 이상 잡으세요',
+    condition: s => (s.stats.totalHackathonBugs || 0) >= 100,
+    progressFn: s => ({ current: s.stats.totalHackathonBugs || 0, target: 100 }),
+    rewardDesc: '크리티컬 확률 +5%',
+    applyReward: s => ({ ...s, critProb: Math.min((s.critProb || 0.05) + 0.05, 0.8) })
+  },
+
+  // ── REBIRTH (3) ──
+  {
+    id: 'rebirth_1', name: '첫 번째 각성', icon: '🔄', category: 'rebirth', triggerOn: ['REBIRTH'],
+    description: '첫 번째 환생을 완료하세요',
+    condition: s => (s.rebirthCount || 0) >= 1,
+    progressFn: s => ({ current: s.rebirthCount || 0, target: 1 }),
+    rewardDesc: '자동 효율 +30%',
+    applyReward: s => ({ ...s, autoMultiplier: (s.autoMultiplier || 1) + 0.3 })
+  },
+  {
+    id: 'rebirth_3', name: '연속 각성자', icon: '♾️', category: 'rebirth', triggerOn: ['REBIRTH'],
+    description: '3번 환생하세요',
+    condition: s => (s.rebirthCount || 0) >= 3,
+    progressFn: s => ({ current: s.rebirthCount || 0, target: 3 }),
+    rewardDesc: '가격 할인 +5%',
+    applyReward: s => ({ ...s, globalDiscount: Math.min((s.globalDiscount || 0) + 0.05, 0.5) })
+  },
+  {
+    id: 'rebirth_5', name: '불멸의 코더', icon: '💫', category: 'rebirth', triggerOn: ['REBIRTH'],
+    description: '5번 환생하세요',
+    condition: s => (s.rebirthCount || 0) >= 5,
+    progressFn: s => ({ current: s.rebirthCount || 0, target: 5 }),
+    rewardDesc: '클릭 효율 +50%',
+    applyReward: s => ({ ...s, clickMultiplier: (s.clickMultiplier || 1) + 0.5 })
+  },
+
+  // ── CREW (2) ──
+  {
+    id: 'crew_first', name: '첫 동료', icon: '👤', category: 'crew', triggerOn: ['SCOUT'],
+    description: '크루를 처음 영입하세요',
+    condition: s => (s.inventory || []).length >= 1,
+    progressFn: s => ({ current: s.inventory?.length || 0, target: 1 }),
+    rewardDesc: '클릭 효율 +10%',
+    applyReward: s => ({ ...s, clickMultiplier: (s.clickMultiplier || 1) + 0.1 })
+  },
+  {
+    id: 'crew_team', name: '드림팀 결성', icon: '👥', category: 'crew', triggerOn: ['SCOUT'],
+    description: '크루를 5명 이상 보유하세요',
+    condition: s => (s.inventory || []).length >= 5,
+    progressFn: s => ({ current: s.inventory?.length || 0, target: 5 }),
+    rewardDesc: '자동 효율 +20%',
+    applyReward: s => ({ ...s, autoMultiplier: (s.autoMultiplier || 1) + 0.2 })
+  },
+
+  // ── COMBO (3) ──
+  {
+    id: 'combo_20', name: '콤보 초보', icon: '💥', category: 'combo', triggerOn: ['CLICK'],
+    description: '20 콤보를 달성하세요',
+    condition: s => (s.maxCombo || 0) >= 20,
+    progressFn: s => ({ current: s.maxCombo || 0, target: 20 }),
+    rewardDesc: '클릭 효율 +20%',
+    applyReward: s => ({ ...s, clickMultiplier: (s.clickMultiplier || 1) + 0.2 })
+  },
+  {
+    id: 'combo_50', name: '콤보 마스터', icon: '🔥', category: 'combo', triggerOn: ['CLICK'],
+    description: '50 콤보를 달성하세요',
+    condition: s => (s.maxCombo || 0) >= 50,
+    progressFn: s => ({ current: s.maxCombo || 0, target: 50 }),
+    rewardDesc: '크리티컬 확률 +5%',
+    applyReward: s => ({ ...s, critProb: Math.min((s.critProb || 0.05) + 0.05, 0.8) })
+  },
+  {
+    id: 'combo_100', name: '콤보의 신', icon: '🌊', category: 'combo', triggerOn: ['CLICK'],
+    description: '100 콤보를 달성하세요',
+    condition: s => (s.maxCombo || 0) >= 100,
+    progressFn: s => ({ current: s.maxCombo || 0, target: 100 }),
+    rewardDesc: '크리티컬 데미지 +50%',
+    applyReward: s => ({ ...s, critMult: (s.critMult || 2) + 0.5 })
+  },
 ];
 
 export const QUEST_POOL = [
@@ -220,6 +425,24 @@ export const QUEST_POOL = [
 export function getKSTDateString() {
   const now = new Date(Date.now() + 9 * 60 * 60 * 1000);
   return now.toISOString().slice(0, 10);
+}
+
+export function getKSTWeekString() {
+    const now = new Date(Date.now() + 9 * 60 * 60 * 1000);
+    const day = now.getUTCDay(); // 0=일, 1=월
+    const mondayOffset = (day === 0 ? -6 : 1 - day);
+    const monday = new Date(now);
+    monday.setUTCDate(now.getUTCDate() + mondayOffset);
+    return monday.toISOString().slice(0, 10);
+}
+
+export function pickWeeklyChallenge() {
+    const weekStr = getKSTWeekString();
+    const seed = parseInt(weekStr.replace(/-/g, ''), 10);
+    let s = seed;
+    s = (s * 1664525 + 1013904223) & 0xffffffff;
+    const idx = (s >>> 0) % WEEKLY_CHALLENGE_POOL.length;
+    return WEEKLY_CHALLENGE_POOL[idx];
 }
 
 function seededRandom(seed) {
@@ -267,6 +490,69 @@ export function getGachaCost(state) {
 }
 // -------------------------------------------------------------
 
+export const WEEKLY_CHALLENGE_POOL = [
+    {
+        id: 'wc_clicks',
+        title: '클릭왕의 주간',
+        description: '이번 주에 코드를 10,000번 클릭하세요',
+        type: 'clicks',
+        target: 10000,
+        reward: { type: 'production_boost', minutes: 120 },
+        rewardDesc: '120분치 초당 생산량 즉시 획득',
+        icon: '⚡'
+    },
+    {
+        id: 'wc_hackathon',
+        title: '해커톤 챔피언 위크',
+        description: '이번 주에 해커톤을 5번 우승하세요',
+        type: 'hackathonWins',
+        target: 5,
+        reward: { type: 'auto_mult_buff', value: 0.1 },
+        rewardDesc: '영구 자동 생산 효율 +10%',
+        icon: '🏆'
+    },
+    {
+        id: 'wc_gamble',
+        title: '타짜의 주간',
+        description: '이번 주에 도박을 50번 성공하세요',
+        type: 'gambleSuccess',
+        target: 50,
+        reward: { type: 'click_mult_buff', value: 0.1 },
+        rewardDesc: '영구 클릭 효율 +10%',
+        icon: '🎰'
+    },
+    {
+        id: 'wc_shop',
+        title: '쇼핑 마니아 위크',
+        description: '이번 주에 아이템을 100개 구매하세요',
+        type: 'itemsBought',
+        target: 100,
+        reward: { type: 'production_boost', minutes: 120 },
+        rewardDesc: '120분치 초당 생산량 즉시 획득',
+        icon: '🛒'
+    },
+    {
+        id: 'wc_power',
+        title: '코딩 마라톤 위크',
+        description: '이번 주에 코딩력을 1억 이상 획득하세요',
+        type: 'powerEarned',
+        target: 100000000,
+        reward: { type: 'auto_mult_buff', value: 0.1 },
+        rewardDesc: '영구 자동 생산 효율 +10%',
+        icon: '💪'
+    },
+    {
+        id: 'wc_combo',
+        title: '콤보 전문가 위크',
+        description: '이번 주에 최대 콤보 50 이상을 달성하세요',
+        type: 'maxCombo',
+        target: 50,
+        reward: { type: 'click_mult_buff', value: 0.1 },
+        rewardDesc: '영구 클릭 효율 +10%',
+        icon: '🔥'
+    },
+];
+
 export const initialGameState = {
     codingPower: 0,
     totalCodingPower: 0,
@@ -287,6 +573,7 @@ export const initialGameState = {
         totalItemsBought: 0,
         gambleSuccess: 0, // 도박 성공 횟수 추적
         hackathonWins: 0, // 해커톤 우승 횟수
+        totalHackathonBugs: 0,
         startTime: Date.now(),
     },
     // 해커톤 전용 상태 필드
@@ -295,6 +582,9 @@ export const initialGameState = {
         bugsCaught: 0,         // 잡은 버그 수
         timeLeft: 0,           // 남은 시간 (초)
     },
+    comboCount: 0,
+    comboEndTime: 0,
+    maxCombo: 0,
     achievements: [], // 달성한 업적 ID 목록
     clickMultiplier: 1.0, // 업적용 클릭 보상 배율
     autoMultiplier: 1.0,  // 업적용 자동 보상 배율
@@ -313,6 +603,21 @@ export const initialGameState = {
             gambleSuccess: 0,
             hackathonWins: 0,
             hackathonBugs: 0,
+            powerEarned: 0,
+        },
+    },
+    weeklyChallenge: {
+        weekStr: '',
+        challenge: null,
+        current: 0,
+        completed: false,
+        claimed: false,
+        challengeDeltaBase: {
+            totalClicks: 0,
+            totalItemsBought: 0,
+            gambleSuccess: 0,
+            hackathonWins: 0,
+            maxCombo: 0,
             powerEarned: 0,
         },
     },

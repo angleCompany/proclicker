@@ -1,6 +1,7 @@
 import { useState, useCallback, useRef } from 'react';
 import { formatNumber, getCurrentTitle } from '../data/gameData';
 import GitGraph from './GitGraph';
+import NextAchievements from './NextAchievements';
 
 const CODE_BG_TEXT = `function solve(problem) {
   const skills = learn();
@@ -36,6 +37,13 @@ function getActiveBoostMultiplier(boosts = []) {
     const bonus = active.reduce((acc, b) => acc + (b.multiplier - 1), 0);
     return 1 + bonus;
 }
+
+const getComboColor = (count) => {
+    if (count >= 100) return '#ef4444'; // red
+    if (count >= 50) return '#f59e0b';  // orange
+    if (count >= 20) return '#eab308';  // yellow
+    return '#10b981';                    // green
+};
 
 export default function CodingArea({ state, onClick }) {
     const [floatingNums, setFloatingNums] = useState([]);
@@ -146,7 +154,38 @@ export default function CodingArea({ state, onClick }) {
                     </div>
                 </div>
 
-                <div className="coding-area__button-section">
+                <NextAchievements state={state} />
+
+                <div className="coding-area__button-section" style={{ position: 'relative' }}>
+                    <style>{`@keyframes comboPop { 0% { transform: scale(1.3); } 100% { transform: scale(1); } }`}</style>
+                    {state.comboCount >= 3 && (
+                        <div style={{
+                            position: 'absolute',
+                            top: '8px',
+                            right: '8px',
+                            background: 'rgba(0,0,0,0.6)',
+                            border: `1px solid ${getComboColor(state.comboCount)}`,
+                            borderRadius: '20px',
+                            padding: '4px 10px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '4px',
+                            animation: 'comboPop 0.15s ease-out',
+                            zIndex: 10,
+                        }}>
+                            <span style={{ fontSize: '14px' }}>🔥</span>
+                            <span style={{
+                                fontFamily: 'monospace',
+                                fontWeight: 900,
+                                fontSize: '16px',
+                                color: getComboColor(state.comboCount),
+                                textShadow: `0 0 8px ${getComboColor(state.comboCount)}`,
+                            }}>
+                                {state.comboCount}
+                            </span>
+                            <span style={{ fontSize: '10px', color: '#94a3b8' }}>COMBO</span>
+                        </div>
+                    )}
                     <button className="main-click-button" onClick={handleClick}>
                         <div className="main-click-button__content">
                             <span className="main-click-button__icon">⌨️</span>

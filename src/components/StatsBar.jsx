@@ -11,6 +11,8 @@ export default function StatsBar({
   onOpenCrew,
   onOpenDailyQuests,
   dailyQuestsHasUnclaimed,
+  onOpenWeeklyChallenge,
+  weeklyHasUnclaimed,
 }) {
   const boostMultiplier = getActiveBoostMultiplier(state.boosts);
   const showRebirthBtn =
@@ -44,6 +46,18 @@ export default function StatsBar({
             >
               <span className="nav-btn__icon">📇</span>
               <span className="nav-btn__label">스카웃</span>
+            </button>
+
+            <button
+              className="nav-btn nav-btn--weekly"
+              onClick={onOpenWeeklyChallenge}
+              aria-label="주간챌린지"
+            >
+              <span className="nav-btn__icon">🗓️</span>
+              <span className="nav-btn__label">주간챌린지</span>
+              {weeklyHasUnclaimed && (
+                <span className="nav-btn__badge" aria-label="주간 챌린지 보상 있음" />
+              )}
             </button>
 
             <button

@@ -364,6 +364,13 @@ body {
   color: #22d3ee;
 }
 
+.nav-btn--weekly {
+  --btn-color: #c084fc;
+  --btn-bg: rgba(192, 132, 252, 0.15);
+  --btn-border: rgba(192, 132, 252, 0.4);
+  --btn-glow: rgba(192, 132, 252, 0.25);
+}
+
 .nav-btn--quests {
   background: rgba(99, 102, 241, 0.12);
   color: var(--accent-primary);

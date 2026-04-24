@@ -14,6 +14,7 @@ import GachaReveal from './components/GachaReveal';
 import AdModal from './components/AdModal';
 import OfflineRewardModal from './components/OfflineRewardModal';
 import DailyQuestModal from './components/DailyQuestModal';
+import WeeklyChallengeModal from './components/WeeklyChallengeModal';
 import { useSound } from './hooks/useSound';
 import { adService } from './services/adService';
 import './index.css';
@@ -24,6 +25,7 @@ function App() {
   const [showCrew, setShowCrew] = useState(false);
   const [adConfig, setAdConfig] = useState(null);
   const [showDailyQuests, setShowDailyQuests] = useState(false);
+  const [showWeeklyChallenge, setShowWeeklyChallenge] = useState(false);
   const { isMuted, toggleMute, playClick, playBuySound } = useSound();
 
   const {
@@ -39,7 +41,9 @@ function App() {
     scoutCrew,
     clearLastScout,
     clearOfflineReward,
+    applyOfflineAdBonus,
     claimQuestReward,
+    claimWeeklyReward,
   } = useGameState();
 
   // 광고 전용 이벤트 리스너
@@ -114,6 +118,8 @@ function App() {
         onOpenCrew={() => setShowCrew(true)}
         onOpenDailyQuests={() => setShowDailyQuests(true)}
         dailyQuestsHasUnclaimed={state.dailyQuests?.quests?.some(q => q.completed && !q.claimed) ?? false}
+        onOpenWeeklyChallenge={() => setShowWeeklyChallenge(true)}
+        weeklyHasUnclaimed={state.weeklyChallenge?.completed && !state.weeklyChallenge?.claimed}
       />
 
       <div className="app__body">
@@ -149,6 +155,15 @@ function App() {
         />
       )}
 
+      {showWeeklyChallenge && (
+        <WeeklyChallengeModal
+          state={state}
+          onClose={() => setShowWeeklyChallenge(false)}
+          onClaimReward={() => { claimWeeklyReward(); }}
+          onPlaySound={playBuySound}
+        />
+      )}
+
       {showRebirth && (
         <RebirthModal
           state={state}
@@ -177,6 +192,11 @@ function App() {
         <OfflineRewardModal
           reward={state.offlineReward}
           onClose={clearOfflineReward}
+          onWatchAd={async () => {
+            const ok = await adService.showRewardedAd();
+            if (ok) applyOfflineAdBonus();
+            clearOfflineReward();
+          }}
         />
       )}
 
