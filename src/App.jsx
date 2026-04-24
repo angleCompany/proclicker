@@ -138,7 +138,7 @@ function App() {
 
       <Hackathon onPlaySound={playBuySound} />
       <AchievementPopup />
-      {showAchievements && <AchievementModal onClose={() => setShowAchievements(false)} />}
+      {showAchievements && <AchievementModal state={state} onClose={() => setShowAchievements(false)} />}
 
       {showDailyQuests && (
         <DailyQuestModal

@@ -12,11 +12,15 @@ function getActiveBoostMultiplier(boosts) {
 }
 
 // 업적 달성 여부를 검사하고 상태를 업데이트하는 헬퍼 함수
-function checkAchievements(state) {
+function checkAchievements(state, actionType = 'ALL') {
     let newState = { ...state };
     let newAchievementsThisTurn = [];
 
-    achievementsList.forEach(ach => {
+    const list = actionType === 'ALL'
+        ? achievementsList
+        : achievementsList.filter(a => a.triggerOn?.includes(actionType));
+
+    list.forEach(ach => {
         if (!newState.achievements.includes(ach.id) && ach.condition(newState)) {
             newState.achievements.push(ach.id);
             newAchievementsThisTurn.push(ach);
@@ -79,22 +83,31 @@ function gameReducer(state, action) {
                 isLucky = true;
             }
 
-            const finalGained = gainedPower + luckyBonus;
+            const now = Date.now();
+            const isComboActive = now < (state.comboEndTime || 0);
+            const newComboCount = isComboActive ? (state.comboCount || 0) + 1 : 1;
+            const comboMult = 1 + Math.log10(Math.max(1, newComboCount)) * 0.5;
+            const newMaxCombo = Math.max(state.maxCombo || 0, newComboCount);
+
+            const finalGained = (gainedPower + luckyBonus) * comboMult;
 
             const newState = {
                 ...state,
                 codingPower: state.codingPower + finalGained,
                 totalCodingPower: state.totalCodingPower + finalGained,
+                comboCount: newComboCount,
+                comboEndTime: now + 1000,
+                maxCombo: newMaxCombo,
                 stats: {
                     ...state.stats,
                     totalClicks: state.stats.totalClicks + 1,
                 },
                 lastClickWasCrit: isCrit,
                 lastClickWasLucky: isLucky,
-                lastClickId: Date.now(), // 클릭 구분용 ID 추가
+                lastClickId: now,
             };
 
-            return updateQuestProgress(checkAchievements(newState));
+            return updateQuestProgress(checkAchievements(newState, 'CLICK'));
         }
 
         case 'CLEAR_OFFLINE_REWARD':
@@ -124,15 +137,17 @@ function gameReducer(state, action) {
             };
 
             // 해커톤 자동 종료 로직
-            if (state.hackathon.isActive && newState.hackathon.timeLeft === 0) {
-                const isWin = state.hackathon.bugsCaught >= 20;
-                newState.hackathon.isActive = false;
-                if (isWin) {
-                    newState.stats.hackathonWins = (newState.stats.hackathonWins || 0) + 1;
-                }
-            }
+            const hackathonEnded = state.hackathon.isActive && newState.hackathon.timeLeft === 0;
+            const isHackathonWin = hackathonEnded && state.hackathon.bugsCaught >= 20;
+            const finalState = hackathonEnded ? {
+                ...newState,
+                hackathon: { ...newState.hackathon, isActive: false },
+                stats: isHackathonWin
+                    ? { ...newState.stats, hackathonWins: (newState.stats.hackathonWins || 0) + 1 }
+                    : newState.stats,
+            } : newState;
 
-            return updateQuestProgress(checkAchievements(newState));
+            return updateQuestProgress(checkAchievements(finalState, 'TICK'));
         }
 
         case 'BUY_AUTO_ITEM': {
@@ -157,7 +172,7 @@ function gameReducer(state, action) {
                 perSecond: newPerSecond,
                 stats: { ...state.stats, totalItemsBought: state.stats.totalItemsBought + 1 },
             };
-            return updateQuestProgress(checkAchievements(newState));
+            return updateQuestProgress(checkAchievements(newState, 'BUY'));
         }
 
         case 'BUY_CLICK_ITEM': {
@@ -185,7 +200,7 @@ function gameReducer(state, action) {
                 perClick: basePerClick * legendMult,
                 stats: { ...state.stats, totalItemsBought: state.stats.totalItemsBought + 1 },
             };
-            return updateQuestProgress(checkAchievements(newState));
+            return updateQuestProgress(checkAchievements(newState, 'BUY'));
         }
 
         case 'BUY_SPECIAL_ITEM': {
@@ -212,7 +227,7 @@ function gameReducer(state, action) {
                         lastGambleResult: `도박 성공! +${Math.floor(reward)} 파워 획득! 🎰`,
                         stats: { ...state.stats, gambleSuccess: (state.stats.gambleSuccess || 0) + 1 }
                     };
-                    return updateQuestProgress(checkAchievements(newState));
+                    return updateQuestProgress(checkAchievements(newState, 'BUY'));
                 } else {
                     return updateQuestProgress({
                         ...state,
@@ -254,7 +269,7 @@ function gameReducer(state, action) {
                 newState.perClick = basePerClick * legendMult;
             }
 
-            return updateQuestProgress(checkAchievements(newState));
+            return updateQuestProgress(checkAchievements(newState, 'BUY'));
         }
 
         case 'TRIGGER_RANDOM_EVENT': {
@@ -310,9 +325,13 @@ function gameReducer(state, action) {
                 hackathon: {
                     ...state.hackathon,
                     bugsCaught: state.hackathon.bugsCaught + 1
+                },
+                stats: {
+                    ...state.stats,
+                    totalHackathonBugs: (state.stats.totalHackathonBugs || 0) + 1
                 }
             };
-            return updateQuestProgress(checkAchievements(newState));
+            return updateQuestProgress(checkAchievements(newState, 'HACKATHON'));
         }
 
         case 'SCOUT_CREW': {
@@ -372,7 +391,7 @@ function gameReducer(state, action) {
                 }
             });
 
-            return checkAchievements(newState);
+            return checkAchievements(newState, 'SCOUT');
         }
 
         case 'CLEAR_LAST_SCOUT': {
@@ -436,7 +455,7 @@ function gameReducer(state, action) {
                 },
             };
 
-            return rebirthState;
+            return checkAchievements(rebirthState, 'REBIRTH');
         }
 
         case 'INIT_DAILY_QUESTS': {
@@ -482,7 +501,7 @@ function gameReducer(state, action) {
                     q.id === questId ? { ...q, claimed: true } : q
                 ),
             };
-            return checkAchievements(newState);
+            return checkAchievements(newState, 'ALL');
         }
 
         case 'CLEAR_NEW_ACHIEVEMENTS': {
