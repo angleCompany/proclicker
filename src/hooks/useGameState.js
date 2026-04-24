@@ -1,11 +1,11 @@
 import { useReducer, useEffect } from 'react';
-import { initialGameState, getItemCost, getMilestoneMultiplier, achievementsList, calculateEquity, crewList, getGachaCost, QUEST_POOL, getKSTDateString, pickDailyQuests, WEEKLY_CHALLENGE_POOL, getKSTWeekString, pickWeeklyChallenge } from '../data/gameData';
+import { initialGameState, getItemCost, getMilestoneMultiplier, achievementsList, calculateEquity, crewList, getGachaCost, QUEST_POOL, getKSTDateString, pickDailyQuests, WEEKLY_CHALLENGE_POOL, getKSTWeekString, pickWeeklyChallenge, DAILY_BONUS_TABLE } from '../data/gameData';
 
 const SAVE_KEY = 'coding_master_advanced_save_v4'; // 최적화 적용 버전
 
-function getActiveBoostMultiplier(boosts) {
+function getActiveBoostMultiplier(boosts, skipClickOnly = false) {
     const now = Date.now();
-    const active = boosts.filter(b => b.endTime > now);
+    const active = boosts.filter(b => b.endTime > now && (!skipClickOnly || !b.clickOnly));
     if (active.length === 0) return 1;
     const bonus = active.reduce((acc, b) => acc + (b.multiplier - 1), 0);
     return 1 + bonus;
@@ -86,7 +86,11 @@ function updateWeeklyProgress(state) {
 function gameReducer(state, action) {
     switch (action.type) {
         case 'CLICK': {
-            const isCrit = Math.random() < Math.min(state.critProb, 0.8);
+            const now = Date.now();
+            const critBoost = state.boosts.find(b => b.endTime > now && b.critOverride);
+            const effectiveCritProb = critBoost ? critBoost.critOverride.prob : Math.min(state.critProb, 0.8);
+            const effectiveCritMult = critBoost ? critBoost.critOverride.mult : state.critMult;
+            const isCrit = Math.random() < effectiveCritProb;
             const boostMultiplier = getActiveBoostMultiplier(state.boosts);
             const achievementMultiplier = state.clickMultiplier || 1.0;
             const equityMultiplier = 1 + (state.equity || 0) * 0.02; // 지분 1당 2%
@@ -94,7 +98,7 @@ function gameReducer(state, action) {
             const synergyBonus = state.perSecond * state.clickSynergy;
             let gainedPower = (state.perClick + synergyBonus) * boostMultiplier * achievementMultiplier * equityMultiplier;
 
-            if (isCrit) gainedPower *= state.critMult;
+            if (isCrit) gainedPower *= effectiveCritMult;
 
             const luckyItem = state.specialItems.find(it => it.type === 'lucky_click');
             let luckyBonus = 0;
@@ -104,7 +108,6 @@ function gameReducer(state, action) {
                 isLucky = true;
             }
 
-            const now = Date.now();
             const isComboActive = now < (state.comboEndTime || 0);
             const newComboCount = isComboActive ? (state.comboCount || 0) + 1 : 1;
             const comboMult = 1 + Math.log10(Math.max(1, newComboCount)) * 0.5;
@@ -154,7 +157,7 @@ function gameReducer(state, action) {
                 return { ...state, _questResetNeeded: true };
             }
             const now = Date.now();
-            const boostMultiplier = getActiveBoostMultiplier(state.boosts);
+            const boostMultiplier = getActiveBoostMultiplier(state.boosts, true);
             const achievementMultiplier = state.autoMultiplier || 1.0;
             const equityMultiplier = 1 + (state.equity || 0) * 0.02; // 지분 1당 2%
             const gainedPower = (state.perSecond * boostMultiplier * state.autoSynergy * achievementMultiplier * equityMultiplier) / 10;
@@ -581,6 +584,33 @@ function gameReducer(state, action) {
             return newState;
         }
 
+        case 'CLAIM_DAILY_BONUS': {
+            const { watchedAd } = action.payload;
+            const todayStr = getKSTDateString();
+            const dayIndex = ((state.loginStreak || 1) - 1) % 7;
+            const bonusDef = DAILY_BONUS_TABLE[dayIndex];
+            const multiplier = watchedAd ? 2 : 1;
+            let newState = {
+                ...state,
+                lastLoginDate: todayStr,
+                _dailyBonusReady: false,
+            };
+            if (bonusDef.reward.type === 'production') {
+                const base = state.perSecond * bonusDef.reward.minutes * 60;
+                const amount = (base > 0 ? base : state.perClick * 200) * multiplier;
+                newState.codingPower += amount;
+                newState.totalCodingPower += amount;
+            } else if (bonusDef.reward.type === 'click_mult') {
+                newState.clickMultiplier = (newState.clickMultiplier || 1.0) + bonusDef.reward.value * multiplier;
+            } else if (bonusDef.reward.type === 'auto_mult') {
+                newState.autoMultiplier = (newState.autoMultiplier || 1.0) + bonusDef.reward.value * multiplier;
+            } else if (bonusDef.reward.type === 'all_mult') {
+                newState.clickMultiplier = (newState.clickMultiplier || 1.0) + bonusDef.reward.value * multiplier;
+                newState.autoMultiplier = (newState.autoMultiplier || 1.0) + bonusDef.reward.value * multiplier;
+            }
+            return newState;
+        }
+
         case 'CLEAR_NEW_ACHIEVEMENTS': {
             return {
                 ...state,
@@ -589,17 +619,45 @@ function gameReducer(state, action) {
         }
 
         case 'APPLY_AD_REWARD': {
-            const rewardBoost = {
-                id: 'ad_reward_' + Date.now(),
-                multiplier: 2,
-                endTime: Date.now() + 5 * 60 * 1000, // 5분
-                name: '광고 시청 보상',
-                icon: '🎬'
-            };
-            return {
-                ...state,
-                boosts: [...state.boosts, rewardBoost]
-            };
+            const rewardType = action.payload?.rewardType ?? 'production';
+            const now = Date.now();
+            if (rewardType === 'production') {
+                return {
+                    ...state,
+                    boosts: [...state.boosts, {
+                        id: 'ad_prod_' + now,
+                        multiplier: 2,
+                        endTime: now + 5 * 60 * 1000,
+                        name: '생산 2배 부스트',
+                        icon: '🚀'
+                    }]
+                };
+            } else if (rewardType === 'click_boost') {
+                return {
+                    ...state,
+                    boosts: [...state.boosts, {
+                        id: 'ad_click_' + now,
+                        multiplier: 3,
+                        endTime: now + 10 * 60 * 1000,
+                        name: '클릭 집중 부스트',
+                        icon: '⚡',
+                        clickOnly: true
+                    }]
+                };
+            } else if (rewardType === 'crit_frenzy') {
+                return {
+                    ...state,
+                    boosts: [...state.boosts, {
+                        id: 'ad_crit_' + now,
+                        multiplier: 1,
+                        endTime: now + 5 * 60 * 1000,
+                        name: '크리티컬 광란',
+                        icon: '🔮',
+                        critOverride: { prob: 0.8, mult: 5 }
+                    }]
+                };
+            }
+            return state;
         }
 
         case 'RESET': return { ...initialGameState, stats: { ...initialGameState.stats, startTime: Date.now() } };
@@ -677,6 +735,19 @@ export function useGameState() {
                     },
                 };
             }
+            const savedLoginDate = loadedState.lastLoginDate ?? '';
+            if (savedLoginDate !== todayKST) {
+                const yesterday = new Date(Date.now() + 9 * 60 * 60 * 1000);
+                yesterday.setUTCDate(yesterday.getUTCDate() - 1);
+                const yesterdayStr = yesterday.toISOString().slice(0, 10);
+                const isConsecutive = savedLoginDate === yesterdayStr;
+                const newStreak = isConsecutive ? Math.min((loadedState.loginStreak || 0) + 1, 7) : 1;
+                loadedState = {
+                    ...loadedState,
+                    loginStreak: newStreak,
+                    _dailyBonusReady: true,
+                };
+            }
             return loadedState;
         } catch { return init; }
     });
@@ -717,7 +788,7 @@ export function useGameState() {
         buyClickItem: (index) => dispatch({ type: 'BUY_CLICK_ITEM', index }),
         buySpecialItem: (index) => dispatch({ type: 'BUY_SPECIAL_ITEM', index }),
         triggerRandomEvent: (type) => dispatch({ type: 'TRIGGER_RANDOM_EVENT', payload: { type } }),
-        applyAdReward: () => dispatch({ type: 'APPLY_AD_REWARD' }),
+        applyAdReward: (rewardType) => dispatch({ type: 'APPLY_AD_REWARD', payload: { rewardType } }),
         startHackathon: () => dispatch({ type: 'START_HACKATHON' }),
         catchHackathonBug: () => dispatch({ type: 'CATCH_HACKATHON_BUG' }),
         scoutCrew: (amount) => dispatch({ type: 'SCOUT_CREW', payload: { amount } }),
@@ -728,6 +799,7 @@ export function useGameState() {
         applyOfflineAdBonus: () => dispatch({ type: 'APPLY_OFFLINE_AD_BONUS' }),
         claimQuestReward: (questId) => dispatch({ type: 'CLAIM_QUEST_REWARD', payload: { questId } }),
         claimWeeklyReward: () => dispatch({ type: 'CLAIM_WEEKLY_REWARD' }),
+        claimDailyBonus: (watchedAd = false) => dispatch({ type: 'CLAIM_DAILY_BONUS', payload: { watchedAd } }),
         resetGame: () => {
             localStorage.removeItem(SAVE_KEY);
             dispatch({ type: 'RESET' });
