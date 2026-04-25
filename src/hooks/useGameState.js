@@ -798,6 +798,15 @@ export function useGameState() {
         return () => clearInterval(saveTimer);
     }, [state]);
 
+    // 새로고침/종료 직전 강제 저장 (데이터 유실 및 출석체크 반복 버그 방지)
+    useEffect(() => {
+        const handleBeforeUnload = () => {
+            localStorage.setItem(SAVE_KEY, JSON.stringify({ ...state, lastSaveTime: Date.now() }));
+        };
+        window.addEventListener('beforeunload', handleBeforeUnload);
+        return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+    }, [state]);
+
     useEffect(() => {
         if (state._questResetNeeded) {
             const todayKST = getKSTDateString();
