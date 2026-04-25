@@ -409,6 +409,16 @@ export const achievementsList = [
   },
 ];
 
+export const DAILY_BONUS_TABLE = [
+    { day: 1, icon: '🎁', label: '5분 생산량',  reward: { type: 'production', minutes: 5 } },
+    { day: 2, icon: '⚡', label: '클릭 효율 +5%', reward: { type: 'click_mult', value: 0.05 } },
+    { day: 3, icon: '🔄', label: '10분 생산량', reward: { type: 'production', minutes: 10 } },
+    { day: 4, icon: '🌟', label: '자동 효율 +5%', reward: { type: 'auto_mult', value: 0.05 } },
+    { day: 5, icon: '💎', label: '20분 생산량', reward: { type: 'production', minutes: 20 } },
+    { day: 6, icon: '🎰', label: '클릭+자동 +5%', reward: { type: 'all_mult', value: 0.05 } },
+    { day: 7, icon: '👑', label: '60분 생산량',  reward: { type: 'production', minutes: 60 } },
+];
+
 export const QUEST_POOL = [
   { id: 'q_clicks_50', title: '손가락 운동', description: '오늘 코드를 50번 클릭하세요', type: 'clicks', target: 50, reward: { type: 'production_boost', minutes: 30 }, rewardDesc: '30분치 초당 생산량 즉시 획득', icon: '🖱️' },
   { id: 'q_clicks_200', title: '클릭 장인', description: '오늘 코드를 200번 클릭하세요', type: 'clicks', target: 200, reward: { type: 'production_boost', minutes: 30 }, rewardDesc: '30분치 초당 생산량 즉시 획득', icon: '⚡' },
@@ -621,5 +631,8 @@ export const initialGameState = {
             powerEarned: 0,
         },
     },
+    lastLoginDate: '',
+    loginStreak: 0,
+    _dailyBonusReady: false,
     _questResetNeeded: false,
 };

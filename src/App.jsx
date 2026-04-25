@@ -15,7 +15,9 @@ import AdModal from './components/AdModal';
 import OfflineRewardModal from './components/OfflineRewardModal';
 import DailyQuestModal from './components/DailyQuestModal';
 import WeeklyChallengeModal from './components/WeeklyChallengeModal';
+import DailyBonusModal from './components/DailyBonusModal';
 import ResetConfirmModal from './components/ResetConfirmModal';
+import AdRewardChoiceModal from './components/AdRewardChoiceModal';
 import { useSound } from './hooks/useSound';
 import { adService } from './services/adService';
 import './index.css';
@@ -28,6 +30,7 @@ function App() {
   const [showDailyQuests, setShowDailyQuests] = useState(false);
   const [showWeeklyChallenge, setShowWeeklyChallenge] = useState(false);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
+  const [showAdChoice, setShowAdChoice] = useState(false);
   const { isMuted, toggleMute, playClick, playBuySound } = useSound();
 
   const {
@@ -46,6 +49,7 @@ function App() {
     applyOfflineAdBonus,
     claimQuestReward,
     claimWeeklyReward,
+    claimDailyBonus,
   } = useGameState();
 
   // 광고 전용 이벤트 리스너
@@ -67,12 +71,7 @@ function App() {
     playBuySound();
   };
 
-  const handleShowAd = async () => {
-    const success = await adService.showRewardedAd();
-    if (success) {
-      applyAdReward();
-    }
-  };
+  const handleShowAd = () => setShowAdChoice(true);
 
   // -------------------------------------------------------------------
   // [개발용 치트 / 디버깅 편의] 콘솔에서 window.gameState 객체를 통해 수치 강제 조작 및 테스트 가능
@@ -162,6 +161,17 @@ function App() {
         />
       )}
 
+      {state._dailyBonusReady && (
+        <DailyBonusModal
+          state={state}
+          onClaim={() => claimDailyBonus(false)}
+          onWatchAd={async () => {
+            const ok = await adService.showRewardedAd();
+            claimDailyBonus(ok);
+          }}
+        />
+      )}
+
       {showRebirth && (
         <RebirthModal
           state={state}
@@ -202,6 +212,17 @@ function App() {
         <ResetConfirmModal
           onConfirm={() => { resetGame(); setShowResetConfirm(false); }}
           onClose={() => setShowResetConfirm(false)}
+        />
+      )}
+
+      {showAdChoice && (
+        <AdRewardChoiceModal
+          onSelect={async (rewardType) => {
+            setShowAdChoice(false);
+            const ok = await adService.showRewardedAd();
+            if (ok) applyAdReward(rewardType);
+          }}
+          onClose={() => setShowAdChoice(false)}
         />
       )}
 
