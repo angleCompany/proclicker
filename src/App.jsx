@@ -49,6 +49,8 @@ function App() {
     clearLastScout,
     clearOfflineReward,
     applyOfflineAdBonus,
+    claimQuestReward,
+    claimWeeklyReward,
     claimDailyBonus,
     loadSave,
     addGems,
