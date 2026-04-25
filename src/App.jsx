@@ -47,10 +47,38 @@ function App() {
     clearLastScout,
     clearOfflineReward,
     applyOfflineAdBonus,
-    claimQuestReward,
-    claimWeeklyReward,
     claimDailyBonus,
+    loadSave,
+    addGems,
+    useTimeSkip,
   } = useGameState();
+
+  const handleExportSave = async () => {
+    try {
+      const saveData = JSON.stringify(state);
+      await navigator.clipboard.writeText(btoa(saveData)); // Base64 encoding for safe transfer
+      alert("세이브 데이터가 클립보드에 복사되었습니다!\\n원하는 곳에 안전하게 붙여넣기 해두세요.");
+    } catch (err) {
+      alert("클립보드 복사에 실패했습니다. 브라우저 설정을 확인해주세요.");
+    }
+  };
+
+  const handleImportSave = () => {
+    const input = prompt("저장된 세이브 코드를 붙여넣어주세요:\\n(주의: 기존 데이터는 덮어씌워집니다)");
+    if (!input) return;
+    try {
+      const decoded = atob(input);
+      const parsed = JSON.parse(decoded);
+      if (parsed && typeof parsed === 'object' && 'codingPower' in parsed) {
+        loadSave(parsed);
+        alert("세이브 데이터를 성공적으로 불러왔습니다!");
+      } else {
+        alert("유효하지 않은 세이브 데이터입니다.");
+      }
+    } catch (err) {
+      alert("세이브 데이터 파싱에 실패했습니다. 올바른 코드인지 확인해주세요.");
+    }
+  };
 
   // 광고 전용 이벤트 리스너
   useEffect(() => {
@@ -86,10 +114,12 @@ function App() {
         buySpecialItem,
         triggerRandomEvent,
         resetGame,
-        applyAdReward
+        applyAdReward,
+        addGems,
+        useTimeSkip
       };
     }
-  }, [state, click, buyAutoItem, buyClickItem, buySpecialItem, triggerRandomEvent, resetGame, applyAdReward]);
+  }, [state, click, buyAutoItem, buyClickItem, buySpecialItem, triggerRandomEvent, resetGame, applyAdReward, addGems, useTimeSkip]);
   // -------------------------------------------------------------------
 
   if (!state) return null;
@@ -117,6 +147,8 @@ function App() {
         dailyQuestsHasUnclaimed={state.dailyQuests?.quests?.some(q => q.completed && !q.claimed) ?? false}
         onOpenWeeklyChallenge={() => setShowWeeklyChallenge(true)}
         weeklyHasUnclaimed={state.weeklyChallenge?.completed && !state.weeklyChallenge?.claimed}
+        onExportSave={handleExportSave}
+        onImportSave={handleImportSave}
       />
 
       <div className="app__body">
@@ -135,6 +167,7 @@ function App() {
             onBuySpecial={handleBuySpecial}
             onShowAd={handleShowAd}
             onPlaySound={playBuySound}
+            onUseTimeSkip={useTimeSkip}
           />
         </div>
       </div>

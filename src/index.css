@@ -1194,6 +1194,25 @@ body {
   animation: floatUp 1s ease-out forwards;
 }
 
+.floating-meme {
+  font-size: 14px;
+  color: white;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.8);
+  font-weight: bold;
+  white-space: nowrap;
+  animation: floatMeme 1.5s ease-out forwards;
+  position: absolute;
+  top: -20px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+@keyframes floatMeme {
+  0% { opacity: 0; transform: translate(-50%, 0) scale(0.8); }
+  20% { opacity: 1; transform: translate(-50%, -10px) scale(1.1); }
+  100% { opacity: 0; transform: translate(-50%, -40px) scale(1); }
+}
+
 .floating-val--crit {
   color: var(--accent-warning);
   font-size: 38px;
@@ -1579,6 +1598,16 @@ body {
 
 .random-event--bug:hover {
   box-shadow: 0 0 35px var(--accent-danger), inset 0 0 15px var(--accent-danger);
+}
+
+.random-event--investor {
+  border-color: #fbbf24;
+  box-shadow: 0 0 20px rgba(251, 191, 36, 0.6);
+  background: rgba(30, 20, 0, 0.9);
+}
+
+.random-event--investor:hover {
+  box-shadow: 0 0 40px #fbbf24, inset 0 0 20px #fbbf24;
 }
 
 .random-event__icon {

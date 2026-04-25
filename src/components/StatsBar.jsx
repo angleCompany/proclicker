@@ -13,6 +13,8 @@ export default function StatsBar({
   dailyQuestsHasUnclaimed,
   onOpenWeeklyChallenge,
   weeklyHasUnclaimed,
+  onExportSave,
+  onImportSave,
 }) {
   const boostMultiplier = getActiveBoostMultiplier(state.boosts);
   const showRebirthBtn =
@@ -86,6 +88,24 @@ export default function StatsBar({
 
           <div className="nav-cluster nav-cluster--utility">
             <button
+              className="nav-btn nav-btn--export"
+              onClick={onExportSave}
+              aria-label="저장"
+              title="데이터 백업"
+            >
+              <span className="nav-btn__icon">💾</span>
+              <span className="nav-btn__label">저장</span>
+            </button>
+            <button
+              className="nav-btn nav-btn--import"
+              onClick={onImportSave}
+              aria-label="불러오기"
+              title="데이터 복구"
+            >
+              <span className="nav-btn__icon">📂</span>
+              <span className="nav-btn__label">복구</span>
+            </button>
+            <button
               className="nav-btn nav-btn--mute"
               onClick={onToggleMute}
               aria-label={isMuted ? '소리 켜기' : '소리 끄기'}
@@ -113,6 +133,12 @@ export default function StatsBar({
         <div className="stats-bar__power-value">
           {formatNumber(state.codingPower)}
         </div>
+        {(state.gems > 0 || import.meta.env.DEV) && (
+          <div className="stats-bar__gems" style={{ marginTop: '4px', fontSize: '14px', color: '#60a5fa', display: 'flex', alignItems: 'center', gap: '4px', cursor: 'pointer' }} onClick={() => window.gameDispatch?.addGems && window.gameDispatch.addGems(100)} title="보석 (개발 환경 클릭 시 100 획득)">
+            <span style={{ fontSize: '16px' }}>💎</span>
+            <span style={{ fontWeight: 700 }}>{state.gems || 0}</span>
+          </div>
+        )}
       </div>
 
       <div className="stats-bar__metrics">

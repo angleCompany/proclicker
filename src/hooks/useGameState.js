@@ -320,6 +320,14 @@ function gameReducer(state, action) {
                     codingPower: state.codingPower + reward,
                     totalCodingPower: state.totalCodingPower + reward,
                 };
+            } else if (type === 'investor') {
+                // 초당 생산량의 60분치 (3600초) 즉시 획득, 단 최소 50000 보장
+                const reward = Math.max(state.perSecond * 3600, 50000);
+                return {
+                    ...state,
+                    codingPower: state.codingPower + reward,
+                    totalCodingPower: state.totalCodingPower + reward,
+                };
             } else if (type === 'bug') {
                 // 30초 동안 클릭 효율 7배 상승 버프 부여
                 const bugBoost = {
@@ -618,6 +626,31 @@ function gameReducer(state, action) {
             };
         }
 
+        case 'ADD_GEMS': {
+            return {
+                ...state,
+                gems: (state.gems || 0) + action.payload.amount
+            };
+        }
+
+        case 'USE_TIME_SKIP': {
+            const { hours, cost } = action.payload;
+            if ((state.gems || 0) < cost) return state;
+            
+            const boostMult = getActiveBoostMultiplier(state.boosts, true);
+            const achievementMultiplier = state.autoMultiplier || 1.0;
+            const equityMultiplier = 1 + (state.equity || 0) * 0.02;
+            const effectivePerSecond = state.perSecond * boostMult * state.autoSynergy * achievementMultiplier * equityMultiplier;
+            const reward = effectivePerSecond * hours * 3600;
+            
+            return {
+                ...state,
+                gems: (state.gems || 0) - cost,
+                codingPower: state.codingPower + reward,
+                totalCodingPower: state.totalCodingPower + reward,
+            };
+        }
+
         case 'APPLY_AD_REWARD': {
             const rewardType = action.payload?.rewardType ?? 'production';
             const now = Date.now();
@@ -800,6 +833,9 @@ export function useGameState() {
         claimQuestReward: (questId) => dispatch({ type: 'CLAIM_QUEST_REWARD', payload: { questId } }),
         claimWeeklyReward: () => dispatch({ type: 'CLAIM_WEEKLY_REWARD' }),
         claimDailyBonus: (watchedAd = false) => dispatch({ type: 'CLAIM_DAILY_BONUS', payload: { watchedAd } }),
+        loadSave: (saveData) => dispatch({ type: 'LOAD_SAVE', payload: saveData }),
+        addGems: (amount) => dispatch({ type: 'ADD_GEMS', payload: { amount } }),
+        useTimeSkip: (hours, cost) => dispatch({ type: 'USE_TIME_SKIP', payload: { hours, cost } }),
         resetGame: () => {
             localStorage.removeItem(SAVE_KEY);
             dispatch({ type: 'RESET' });

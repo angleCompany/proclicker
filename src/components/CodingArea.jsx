@@ -45,6 +45,12 @@ const getComboColor = (count) => {
     return '#10b981';                    // green
 };
 
+const MEME_TEXTS = [
+    "왜 되지?", "내 컴퓨터에선 되는데", "오타 발견!", "Ctrl+S",
+    "이게 되네?", "리팩토링 마렵다", "버그 아님. 기능임.",
+    "주석 달기 귀찮다", "StackOverflow 최고", "복붙 완료!"
+];
+
 export default function CodingArea({ state, onClick }) {
     const [floatingNums, setFloatingNums] = useState([]);
     const [particles, setParticles] = useState([]);
@@ -81,9 +87,12 @@ export default function CodingArea({ state, onClick }) {
             setTimeout(() => setIsTyping(false), 100);
 
             const id = ++idCounter.current;
+            const spawnMeme = Math.random() < 0.15; // 15% chance to spawn meme text
+            const memeText = spawnMeme ? MEME_TEXTS[Math.floor(Math.random() * MEME_TEXTS.length)] : null;
+
             setFloatingNums(prev => [
                 ...prev.slice(-8),
-                { id, x, y, value: val, isCrit, isLucky },
+                { id, x, y, value: val, isCrit, isLucky, memeText },
             ]);
 
             const particlePool = isCrit || isLucky
@@ -206,6 +215,7 @@ export default function CodingArea({ state, onClick }) {
                         style={{ left: `${n.x}px`, top: `${n.y}px` }}
                     >
                         {n.isLucky ? 'BUG BOUNTY! 💰 ' : n.isCrit ? 'CRITICAL! ' : ''}+{formatNumber(n.value)}
+                        {n.memeText && <div className="floating-meme">{n.memeText}</div>}
                     </span>
                 ))}
                 {particles.map(p => (

@@ -566,6 +566,7 @@ export const WEEKLY_CHALLENGE_POOL = [
 export const initialGameState = {
     codingPower: 0,
     totalCodingPower: 0,
+    gems: 0, // 프리미엄 재화
     perClick: 1,
     perSecond: 0,
     critProb: 0.05,
