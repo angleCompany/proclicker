@@ -70,7 +70,7 @@ function App() {
   const handleExportSave = async () => {
     try {
       const saveData = JSON.stringify(state);
-      const base64Data = btoa(saveData);
+      const base64Data = btoa(unescape(encodeURIComponent(saveData)));
 
       if (navigator.clipboard && window.isSecureContext) {
         await navigator.clipboard.writeText(base64Data);
@@ -87,19 +87,19 @@ function App() {
         textArea.remove();
         if (!successful) throw new Error('Fallback copy failed');
       }
-      alert("세이브 데이터가 클립보드에 복사되었습니다!\\n원하는 곳에 안전하게 붙여넣기 해두세요.");
+      alert("세이브 데이터가 클립보드에 복사되었습니다!\n원하는 곳에 안전하게 붙여넣기 해두세요.");
     } catch (err) {
       console.error('Clipboard copy failed:', err);
-      const base64Data = btoa(JSON.stringify(state));
+      const base64Data = btoa(unescape(encodeURIComponent(JSON.stringify(state))));
       prompt("자동 복사에 실패했습니다. 아래 텍스트를 수동으로 전체 선택하여 복사해주세요:", base64Data);
     }
   };
 
   const handleImportSave = () => {
-    const input = prompt("저장된 세이브 코드를 붙여넣어주세요:\\n(주의: 기존 데이터는 덮어씌워집니다)");
+    const input = prompt("저장된 세이브 코드를 붙여넣어주세요:\n(주의: 기존 데이터는 덮어씌워집니다)");
     if (!input) return;
     try {
-      const decoded = atob(input);
+      const decoded = decodeURIComponent(escape(atob(input)));
       const parsed = JSON.parse(decoded);
       if (parsed && typeof parsed === 'object' && 'codingPower' in parsed) {
         loadSave(parsed);
