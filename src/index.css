@@ -42,6 +42,8 @@
   margin: 0;
   padding: 0;
   box-sizing: border-box;
+  touch-action: manipulation; /* 모바일 더블 탭 확대 방지 */
+  -webkit-tap-highlight-color: transparent; /* 터치 깜빡임 전역 방지 */
 }
 
 html,
