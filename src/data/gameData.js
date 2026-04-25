@@ -636,4 +636,5 @@ export const initialGameState = {
     loginStreak: 0,
     _dailyBonusReady: false,
     _questResetNeeded: false,
+    isTutorialCompleted: false, // 초반 튜토리얼 지급 여부
 };

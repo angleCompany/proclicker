@@ -18,6 +18,7 @@ import WeeklyChallengeModal from './components/WeeklyChallengeModal';
 import DailyBonusModal from './components/DailyBonusModal';
 import ResetConfirmModal from './components/ResetConfirmModal';
 import AdRewardChoiceModal from './components/AdRewardChoiceModal';
+import ServerCrashModal from './components/ServerCrashModal';
 import { useSound } from './hooks/useSound';
 import { adService } from './services/adService';
 import './index.css';
@@ -31,6 +32,7 @@ function App() {
   const [showWeeklyChallenge, setShowWeeklyChallenge] = useState(false);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
   const [showAdChoice, setShowAdChoice] = useState(false);
+  const [showServerCrash, setShowServerCrash] = useState(false);
   const { isMuted, toggleMute, playClick, playBuySound } = useSound();
 
   const {
@@ -51,7 +53,17 @@ function App() {
     loadSave,
     addGems,
     useTimeSkip,
+    serverCrashResult,
+    completeTutorial,
   } = useGameState();
+
+  // 튜토리얼: 최초 접속 시 1회 지급
+  useEffect(() => {
+    if (state && !state.isTutorialCompleted) {
+      const timer = setTimeout(() => completeTutorial(), 800);
+      return () => clearTimeout(timer);
+    }
+  }, [state?.isTutorialCompleted]);
 
   const handleExportSave = async () => {
     try {
@@ -148,8 +160,12 @@ function App() {
     <div className="app">
       {/* 화면 위를 떠다니는 랜덤 이벤트 (황금 쿠키) */}
       <RandomEvent onTrigger={(type) => {
-        triggerRandomEvent(type);
-        playBuySound(); // 획득 시 특별한 소리 재생
+        if (type === 'server_crash') {
+          setShowServerCrash(true);
+        } else {
+          triggerRandomEvent(type);
+          playBuySound();
+        }
       }} />
 
       {/* 모바일: 상단 스탯 바 / 데스크탑: 좌측 패널에 내장 */}
@@ -274,6 +290,19 @@ function App() {
             if (ok) applyAdReward(rewardType);
           }}
           onClose={() => setShowAdChoice(false)}
+        />
+      )}
+
+      {showServerCrash && (
+        <ServerCrashModal
+          onSuccess={() => {
+            serverCrashResult(true);
+            setShowServerCrash(false);
+          }}
+          onFail={() => {
+            serverCrashResult(false);
+            setShowServerCrash(false);
+          }}
         />
       )}
 

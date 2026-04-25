@@ -693,6 +693,56 @@ function gameReducer(state, action) {
             return state;
         }
 
+        case 'SERVER_CRASH_RESULT': {
+            const { success } = action.payload;
+            const now = Date.now();
+            if (success) {
+                // 성공: 1분간 생산량 2배 부스트
+                return {
+                    ...state,
+                    boosts: [...state.boosts, {
+                        id: 'server_crash_win_' + now,
+                        multiplier: 2,
+                        endTime: now + 60 * 1000,
+                        name: '서버 복구 보상',
+                        icon: '🔴'
+                    }]
+                };
+            } else {
+                // 실패: 1분간 생산량 0.5배 (디버프)
+                return {
+                    ...state,
+                    boosts: [...state.boosts, {
+                        id: 'server_crash_fail_' + now,
+                        multiplier: 0.5,
+                        endTime: now + 60 * 1000,
+                        name: '서버 다운 패널티',
+                        icon: '💥'
+                    }]
+                };
+            }
+        }
+
+        case 'COMPLETE_TUTORIAL': {
+            if (state.isTutorialCompleted) return state;
+            // 기계식 키보드(autoItems[0]) 1개 + 보석 100개 지급
+            const newAutoItems = state.autoItems.map((item, i) =>
+                i === 0 ? { ...item, owned: item.owned + 1 } : item
+            );
+            // 기계식 키보드 perSecond 재계산
+            const newPerSecond = newAutoItems.reduce((sum, item) => {
+                const milestone = getMilestoneMultiplier(item.owned);
+                return sum + item.effect * item.owned * milestone;
+            }, 0);
+            return {
+                ...state,
+                autoItems: newAutoItems,
+                perSecond: newPerSecond,
+                gems: (state.gems || 0) + 100,
+                isTutorialCompleted: true,
+            };
+        }
+
         case 'RESET': return { ...initialGameState, stats: { ...initialGameState.stats, startTime: Date.now() } };
         case 'LOAD_SAVE': return action.payload;
         default: return state;
@@ -845,6 +895,8 @@ export function useGameState() {
         loadSave: (saveData) => dispatch({ type: 'LOAD_SAVE', payload: saveData }),
         addGems: (amount) => dispatch({ type: 'ADD_GEMS', payload: { amount } }),
         useTimeSkip: (hours, cost) => dispatch({ type: 'USE_TIME_SKIP', payload: { hours, cost } }),
+        serverCrashResult: (success) => dispatch({ type: 'SERVER_CRASH_RESULT', payload: { success } }),
+        completeTutorial: () => dispatch({ type: 'COMPLETE_TUTORIAL' }),
         resetGame: () => {
             localStorage.removeItem(SAVE_KEY);
             dispatch({ type: 'RESET' });
