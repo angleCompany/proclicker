@@ -24,12 +24,26 @@ export default function ShareButton({ state }) {
     const handleCopy = async () => {
         const text = generateShareText();
         try {
-            await navigator.clipboard.writeText(text);
+            if (navigator.clipboard && window.isSecureContext) {
+                await navigator.clipboard.writeText(text);
+            } else {
+                const textArea = document.createElement("textarea");
+                textArea.value = text;
+                textArea.style.position = "fixed";
+                textArea.style.left = "-999999px";
+                textArea.style.top = "-999999px";
+                document.body.appendChild(textArea);
+                textArea.focus();
+                textArea.select();
+                const successful = document.execCommand('copy');
+                textArea.remove();
+                if (!successful) throw new Error('Fallback copy failed');
+            }
             setCopied(true);
             setTimeout(() => setCopied(false), 2000);
         } catch (err) {
             console.error('Failed to copy text: ', err);
-            alert("클립보드 복사에 실패했습니다.");
+            prompt("자동 복사에 실패했습니다. 아래 텍스트를 수동으로 복사해주세요:", text);
         }
     };
 
