@@ -1500,6 +1500,13 @@ body {
   background: rgba(99, 102, 241, 0.03);
 }
 
+.item-card--holding {
+  transform: scale(0.97);
+  border-color: rgba(99, 102, 241, 0.6) !important;
+  box-shadow: 0 0 12px rgba(99, 102, 241, 0.3);
+  transition: transform 0.05s, box-shadow 0.05s;
+}
+
 /* 버그 바운티 플로팅 효과 */
 .floating-val--lucky {
   color: #fbbf24 !important;

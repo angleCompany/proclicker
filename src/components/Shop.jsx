@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { formatNumber, getItemCost, MILESTONES, getMilestoneMultiplier } from '../data/gameData';
 
 const TABS = [
@@ -18,6 +18,10 @@ export default function Shop({
     onUseTimeSkip,
 }) {
     const [activeTab, setActiveTab] = useState('auto');
+    const [holdingIndex, setHoldingIndex] = useState(null);
+    const holdTimerRef = useRef(null);
+    const holdIntervalRef = useRef(null);
+    const isHoldingRef = useRef(false);
 
     const currentTab = TABS.find(t => t.id === activeTab);
     const items = state[currentTab.key] || [];
@@ -28,6 +32,31 @@ export default function Shop({
             : activeTab === 'click'
                 ? onBuyClick
                 : onBuySpecial;
+
+    const stopHold = () => {
+        clearTimeout(holdTimerRef.current);
+        clearInterval(holdIntervalRef.current);
+        holdTimerRef.current = null;
+        holdIntervalRef.current = null;
+        isHoldingRef.current = false;
+        setHoldingIndex(null);
+    };
+
+    const handlePointerDown = (e, index, disabled, buy) => {
+        if (disabled) return;
+        e.currentTarget.setPointerCapture(e.pointerId);
+        holdTimerRef.current = setTimeout(() => {
+            isHoldingRef.current = true;
+            setHoldingIndex(index);
+            buy();
+            holdIntervalRef.current = setInterval(buy, 80);
+        }, 400);
+    };
+
+    const handlePointerUp = (disabled, buy) => {
+        if (!isHoldingRef.current && !disabled) buy();
+        stopHold();
+    };
 
     return (
         <div className="shop">
@@ -61,13 +90,12 @@ export default function Shop({
                     return (
                         <div
                             key={item.id}
-                            className={`item-card ${disabled ? 'item-card--disabled' : ''} ${milestoneMult > 1 ? 'item-card--milestone' : ''}`}
-                            onClick={() => {
-                                if (!disabled) {
-                                    buyHandler(index);
-                                    onPlaySound();
-                                }
-                            }}
+                            className={`item-card ${disabled ? 'item-card--disabled' : ''} ${milestoneMult > 1 ? 'item-card--milestone' : ''} ${holdingIndex === index ? 'item-card--holding' : ''}`}
+                            onPointerDown={(e) => handlePointerDown(e, index, disabled, () => { buyHandler(index); onPlaySound(); })}
+                            onPointerUp={() => handlePointerUp(disabled, () => { buyHandler(index); onPlaySound(); })}
+                            onPointerLeave={stopHold}
+                            onPointerCancel={stopHold}
+                            style={{ userSelect: 'none', touchAction: 'none' }}
                         >
                             <div className="item-card__icon">{item.icon}</div>
                             <div className="item-card__info">
