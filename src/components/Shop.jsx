@@ -174,12 +174,12 @@ export default function Shop({
             </div>
 
             <div className="ad-banner">
-                <div className="ad-banner__text">실제 혜택이 쏟아지는 보상형 광고!</div>
+                <div className="ad-banner__text">클라이언트와 짧은 미팅을 진행하세요!</div>
                 <button
                     className="ad-banner__button"
                     onClick={onShowAd}
                 >
-                    🎬 무료 2배 부스트 받기
+                    💼 미팅하고 2배 부스트 받기
                 </button>
             </div>
         </div>

@@ -341,6 +341,41 @@ function gameReducer(state, action) {
                     ...state,
                     boosts: [...state.boosts, bugBoost]
                 };
+            } else if (type === 'pr_review') {
+                // 엄청난 즉시 보상
+                const reward = Math.max(state.perSecond * 1000, 10000);
+                return {
+                    ...state,
+                    codingPower: state.codingPower + reward,
+                    totalCodingPower: state.totalCodingPower + reward,
+                };
+            } else if (type === 'legacy_code') {
+                // 1분간 5배 생산 부스트
+                const legacyBoost = {
+                    id: 'legacy_boost_' + Date.now(),
+                    multiplier: 5,
+                    endTime: Date.now() + 60 * 1000,
+                    name: '리팩토링 보너스',
+                    icon: '💾'
+                };
+                return {
+                    ...state,
+                    boosts: [...state.boosts, legacyBoost]
+                };
+            } else if (type === 'ai_hallucination') {
+                // 함정! 클릭 시 파워 감소 및 디버프
+                const penalty = state.codingPower * 0.05;
+                return {
+                    ...state,
+                    codingPower: Math.max(0, state.codingPower - penalty),
+                    boosts: [...state.boosts, {
+                        id: 'ai_hallucination_penalty_' + Date.now(),
+                        multiplier: 0.5,
+                        endTime: Date.now() + 30 * 1000,
+                        name: '스파게티 코드',
+                        icon: '💀'
+                    }]
+                };
             }
             return state;
         }

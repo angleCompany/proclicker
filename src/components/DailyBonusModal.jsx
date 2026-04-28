@@ -109,7 +109,7 @@ export default function DailyBonusModal({ state, onClaim, onWatchAd }) {
                             boxShadow: '0 3px 12px rgba(255,215,0,0.4)',
                         }}
                     >
-                        📺 광고 보고 2배 받기!
+                        💼 클라이언트 미팅하고 2배 받기!
                         <div style={{ fontSize: '11px', fontWeight: 'normal', opacity: 0.8, marginTop: '2px' }}>
                             {today.label} × 2
                         </div>

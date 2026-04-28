@@ -7,7 +7,7 @@ class AdService {
     constructor() {
         this.isAdLoading = false;
         this.lastAdTime = 0;
-        this.adCooldown = 5 * 60 * 1000; // 5분 쿨타임
+        this.adCooldown = 30 * 60 * 1000; // 30분 쿨타임
         this.rewardTimerSeconds = 15; // 15초 노출 시 보상
     }
 

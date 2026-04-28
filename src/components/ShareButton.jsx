@@ -1,24 +1,20 @@
 import { useState } from 'react';
 import { getCurrentTitle, formatNumber } from '../data/gameData';
+import ShareCardModal from './ShareCardModal';
 
 export default function ShareButton({ state }) {
     const [copied, setCopied] = useState(false);
-    const gameUrl = window.location.origin; // 현재 접속 중인 사이트 주소 (실제 배포 주소로 자동 매핑)
+    const [showCardModal, setShowCardModal] = useState(false);
+    const gameUrl = window.location.origin;
 
     const generateShareText = () => {
         const title = getCurrentTitle(state.totalCodingPower);
-        return `💻 코딩 마스터: 프로그래머 키우기 💻
-
-` +
-               `🏆 현재 칭호: [${title.title}] ${title.icon}
-` +
-               `⚡ 초당 코딩력: ${formatNumber(state.perSecond)}/s
-` +
-               `⌨️ 타건 횟수: ${formatNumber(state.stats.totalClicks)}번
-
-` +
-               `나의 잉여력을 뛰어넘을 수 있을까?
-👉 도전하기: ${gameUrl}`;
+        return `💻 코딩 마스터: 프로그래머 키우기 💻\n\n` +
+               `🏆 현재 칭호: [${title.title}] ${title.icon}\n` +
+               `⚡ 초당 코딩력: ${formatNumber(state.perSecond)}/s\n` +
+               `⌨️ 타건 횟수: ${formatNumber(state.stats?.totalClicks || 0)}번\n\n` +
+               `나의 잉여력을 뛰어넘을 수 있을까?\n` +
+               `👉 도전하기: ${gameUrl}`;
     };
 
     const handleCopy = async () => {
@@ -57,6 +53,14 @@ export default function ShareButton({ state }) {
         <div className="share-container">
             <div className="share-buttons">
                 <button 
+                    className="share-btn"
+                    onClick={() => setShowCardModal(true)}
+                    title="명함 카드로 공유하기"
+                    style={{ background: 'linear-gradient(45deg, #0088ff, #00bbff)', color: '#fff' }}
+                >
+                    💌 명함으로 자랑하기
+                </button>
+                <button 
                     className={`share-btn share-btn--copy ${copied ? 'copied' : ''}`}
                     onClick={handleCopy}
                     title="클립보드에 복사하기"
@@ -74,6 +78,10 @@ export default function ShareButton({ state }) {
                     <span>자랑하기</span>
                 </button>
             </div>
+            
+            {showCardModal && (
+                <ShareCardModal state={state} onClose={() => setShowCardModal(false)} />
+            )}
         </div>
     );
 }

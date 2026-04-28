@@ -38,7 +38,7 @@ export default function OfflineRewardModal({ reward, onClose, onWatchAd }) {
                         }}
                         onClick={onWatchAd}
                     >
-                        📺 광고 보고 1.5배 받기!
+                        💼 클라이언트 미팅하고 1.5배 받기!
                         <div style={{ fontSize: '12px', fontWeight: 'normal', marginTop: '2px', opacity: 0.8 }}>
                             +{formatNumber(reward.amount * 1.5)} 코딩력
                         </div>

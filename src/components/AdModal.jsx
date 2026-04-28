@@ -43,7 +43,7 @@ export default function AdModal({ seconds, onComplete, onCancel }) {
         <div className="modal-overlay">
             <div className="ad-modal">
                 <div className="ad-modal-header">
-                    <h3>🎬 후원 광고 시청</h3>
+                    <h3>💼 외주 미팅 수락 (15초)</h3>
                     {!isFinished && <div className="ad-modal-timer">{timeLeft}초 남음</div>}
                 </div>
                 
@@ -69,7 +69,7 @@ export default function AdModal({ seconds, onComplete, onCancel }) {
                         onClick={handleCollect}
                         disabled={!isFinished}
                     >
-                        {isFinished ? '보상 받기!' : '기다리는 중...'}
+                        {isFinished ? '외주 계약 완료!' : '미팅 진행 중...'}
                     </button>
                 </div>
             </div>
